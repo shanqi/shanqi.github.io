@@ -1,0 +1,202 @@
+﻿<html xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office"> 
+<head> 
+<link href="style.css" rel="stylesheet" type="text/css">
+<title>Software Download</title>
+<style type="text/css">
+.style1 {
+	font-size: 9.5pt;
+}
+.style2 {
+	text-align: center;
+}
+.style3 {
+	margin-top: 0px;
+}
+.style4 {
+	text-align: center;
+	font-size: small;
+}
+</style>
+</head> 
+<body>
+<table border="0" cellpadding="0" cellspacing="0" class="tbl1" width="100%">
+  <tr> 
+    <td colspan="4"></td>
+  </tr>
+  <tr valign="top"> 
+    <td width="60%" height="91"><img src="single_pixel.gif" width="1" height="140"></td>
+    <td width="40%" height="91" colspan="3" valign="top" align="center"> 
+
+    &nbsp;</td>
+  </tr>
+  <tr> 
+    <td colspan="3"  > 
+  </tr>
+  <tr> 
+    <td valign="top" colspan="4"> 
+      <table width="90%" border="0" cellspacing="15">
+       <tr>
+        <td width="8%" valign="top"><img src="single_pixel.gif" width="140" height="1" alt=""><br>
+		<p><strong>Menu</strong><br>
+			<a href="./index.htm">Home</a><br>
+			<a href="./software.htm">Software Download</a></p>
+	</td>
+        <td width="92%"> <font style="font-size: 9.5pt;" face="Verdana">
+        	<h2>Image Non-blind Deconvolution Library</h2>
+	
+			<p class="style1"> [<a href="res/LibDeconvConsoleTest.zip">Click to download the library with a demo project</a>]</p>
+			<p class="style1"> This is a free library for solving the non-blind deconvolution 
+			problem, to facilitate the research of image deblurring. To incorporated it into an existing project, we need to 
+			first link the library file xxxx.lib. Then the non-blind deconvolution routine can be simply called as:</p>
+			<p class="style1">CDeconvAgent::RunDeconvolution(double * inputData, double * outputData, int imWidth, int imHeight, int imChannelNum, double * kernelData, int kWidth, int kHeight, double noiseStr, double localPriorWeight );</p>
+			<h3>Parameter Definition:</h3>
+			<table style="width: 90%">
+				<tr>
+					<td style="width: 117px" class="style1">inputData</td>
+					<td> 
+					<font style="font-size: 9.5pt;" face="Verdana" class="style1">
+        								a double array stores the input blurred image data, for an 
+					image with width &quot;w&quot; and height &quot;h&quot;, the value of the i&#39;th 
+					channnel of a pixel in the position (j,k) stores in 
+					inputData[i*w*h+j*w+k]&nbsp;
+			</font>
+					</td>
+				</tr>
+				<tr class="style1">
+					<td style="width: 117px">outputData&nbsp;</td>
+					<td>a double array which has been allocated with the same 
+					size as &quot;inputData&quot; to store the data of the recovered image</td>
+				</tr>
+				<tr class="style1">
+					<td style="width: 117px">imWidth</td>
+					<td>the width of the input image</td>
+				</tr>
+				<tr class="style1">
+					<td style="width: 117px">imHeight</td>
+					<td>the height of the input image</td>
+				</tr>
+				<tr class="style1">
+					<td style="width: 117px">imChannelNum</td>
+					<td>the number of channels in the input image, e.g., for a 
+					grayscale image, imChannelNum =1, while for a color image 
+					composed with three channels (RGB), imChannelNum=3</td>
+				</tr>
+				<tr class="style1">
+					<td style="width: 117px">kernelData</td>
+					<td>a double array stores the input motion kernel, <font style="font-size: 9.5pt;" face="Verdana">
+					<font style="font-size: 9.5pt;" face="Verdana" class="style1">
+        								for a kernel with width &quot;kw&quot; and height 
+					&quot;kh&quot;, the value of the kernel element in the position (j,k) stores in 
+					kernelData[j*kw+k]&nbsp;
+			</font>
+			</font>
+					</td>
+				</tr>
+				<tr class="style1">
+					<td style="width: 117px">kWidth</td>
+					<td>the width of the kernel</td>
+				</tr>
+				<tr class="style1">
+					<td style="width: 117px">kHeight</td>
+					<td>the height of the kernel</td>
+				</tr>
+				<tr class="style1">
+					<td style="width: 117px">noiseStr</td>
+					<td>a parameter which indicate the strength of noise, 
+					increase this parameter will make a result looks smooth, 
+					while reducing this parameter will make more local structure 
+					visible and may produce more visual artifacts, its default 
+					value is shown in &quot;DeconvAgent.h&quot;</td>
+				</tr>
+				<tr class="style1">
+					<td style="width: 117px">localPriorWeight</td>
+					<td>a parameter to adjust the smoothness enforced on flat 
+					regions, <font style="font-size: 9.5pt;" face="Verdana">
+        			its default value is shown in &quot;DeconvAgent.h&quot;</font></td>
+				</tr>
+			</table>
+		<h3>System Requirement:</h3>
+			<p class="style1">Microsoft Visual Studio 2005 is needed to open the demo program. 
+			And since the library is compiled with VS2005 on Windows, there may 
+			be problems when you try to incorporate this library into your 
+			project developed with other platforms or IDEs. This library is not 
+			conflicted with MFC.</p>
+			<h3>Version Information:</h3>
+			<p class="style1">Distribution Version: 0.1 (Nov. 6th, 2008) by Qi Shan and Jiaya 
+			Jia ({qshan, leojia}@cse.cuhk.edu.hk), CSE department, the Chinese 
+			University of Hong Kong. This program is tested with Visual Studio 
+			2005 on Windows XP and Vista, but is still not guaranteed to be 
+			bug-free and work properly with all versions of Windows. It is for 
+			educational use ONLY. If you use this executable for your academic 
+			publication, please acknowledge this work:<br>
+			<br>
+			@article{hqdeblurring_siggraph2008,<br>
+			author = {Qi Shan and Jiaya Jia and Aseem Agarwala},<br>
+			title = {High-quality Motion Deblurring from a Single Image},<br>
+			journal = {ACM Transactions on Graphics (SIGGRAPH)},<br>
+			year = {2008}, <br>
+			}</p>
+		<h3>Results:</h3>
+		<table style="width: 900px" align="center">
+			<tr class="style1">
+				<td class="style4" style="width: 40%">Input Image<br>
+&nbsp;</td>
+				<td class="style4" style="width: 40%">Output Image <br>
+&nbsp;</td>
+				<td class="style4" style="width: 20%">Kernel<br>
+&nbsp;</td>
+			</tr>
+			<tr>
+				<td style="width: 262px" class="style2">
+				<img src="figures/test4_1.bmp" width="363" height="229"></td>
+				<td style="width: 300px" class="style2">
+				<img src="figures/outputTest4_1.bmp" width="363" height="229" class="style3"></td>
+				<td style="width: 139px" class="style2">
+				<img src="figures/kernel4.bmp" width="99" height="99"><br>
+				<br>
+				<font style="font-size: 9.5pt;" face="Verdana">
+        		<span class="style1">noiseStr = 0.02<br>
+				localPriorWeight = 1</span><br>
+			</font>
+				<br>
+				</td>
+			</tr>
+			<tr>
+				<td style="width: 262px" class="style2">
+				<img src="figures/redTreeBlurImage.png" width="363"></td>
+				<td style="width: 300px" class="style2">
+				<img src="figures/outputTest6.bmp" width="363"></td>
+				<td style="width: 139px" class="style2">
+				<img src="figures/outKernelRT.png" width="99"><br>
+				<br>
+				<font style="font-size: 9.5pt;" face="Verdana">
+        		<span class="style1">noiseStr = 0.008<br>
+				localPriorWeight = 20</span><br>
+			</font>
+				</td>
+			</tr>
+			<tr>
+				<td style="width: 262px" class="style2">
+				<font style="font-size: 9.5pt;" face="Verdana">
+				<img src="figures/statBlur.png" width="363"></font></td>
+				<td style="width: 300px" class="style2">
+				<img src="figures/outputTest7.png" width="363"></td>
+				<td style="width: 139px" class="style2">
+				<img src="figures/outKernelStat.png" width="99"><br>
+				<br>
+				<font style="font-size: 9.5pt;" face="Verdana">
+        		<span class="style1">noiseStr = 0.04<br>
+				localPriorWeight = 50</span></font></td>
+			</tr>
+		</table>
+			</font>
+	</td>
+       </tr>
+      </table>
+      </td>
+  </tr>
+</table>
+<br>
+<p class="style2">*** End ***</p>
+</body> 
+</html>

@@ -1,0 +1,192 @@
+﻿<html xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office"> 
+<head> 
+<link href="style.css" rel="stylesheet" type="text/css">
+<title>Software Download</title>
+<style type="text/css">
+.style1 {
+	font-size: 9.5pt;
+}
+.style2 {
+	text-align: center;
+}
+.style3 {
+	margin-top: 0px;
+}
+.style4 {
+	text-align: center;
+	font-size: small;
+}
+</style>
+</head> 
+<body>
+<table border="0" cellpadding="0" cellspacing="0" class="tbl1" width="100%">
+  <tr> 
+    <td colspan="4"></td>
+  </tr>
+  <tr valign="top"> 
+    <td width="60%" height="91"><img src="single_pixel.gif" width="1" height="140"></td>
+    <td width="40%" height="91" colspan="3" valign="top" align="center"> 
+
+    &nbsp;</td>
+  </tr>
+  <tr> 
+    <td colspan="3"  > 
+  </tr>
+  <tr> 
+    <td valign="top" colspan="4"> 
+      <table width="90%" border="0" cellspacing="15">
+       <tr>
+        <td width="8%" valign="top"><img src="single_pixel.gif" width="140" height="1" alt=""><br>
+		<p><strong>Menu</strong><br>
+			<a href="./index.htm">Home</a><br>
+			<a href="./software.htm">Software Download</a></p>
+	</td>
+        <td width="92%"> <font style="font-size: 9.5pt;" face="Verdana">
+        	<h2>Image Non-blind Deconvolution</h2>
+	
+			<p class="style1"> [<a href="res/non-blind-deconv-release_v0.1.zip">Click to download 
+			a package with the executable and examples</a>]</p>
+			<p class="style1"> This is a free executable for solving the non-blind deconvolution 
+			problem, to facilitate the research of image deblurring. The format 
+			of the command is as follows:</p>
+			<p class="style1">robust_deconv.exe inputImageName kernelFileName 
+			outputImageName boundaryType noiseStr localPriorWeight</p>
+			<h3>Parameter Definition:</h3>
+			<table style="width: 90%" class="style1">
+				<tr>
+					<td style="width: 117px" class="style1"> <font style="font-size: 9.5pt;" face="Verdana">
+        			inputImageName
+			</font>
+					</td>
+					<td> 
+					T<font style="font-size: 9.5pt;" face="Verdana" class="style1">he filename of&nbsp; the input blur 
+					image, in this version, .bmp, .png and .jpg files are 
+					supported</font></td>
+				</tr>
+				<tr class="style1">
+					<td style="width: 117px"> <font style="font-size: 9.5pt;" face="Verdana">
+					kernelFileName
+			</font>
+					</td>
+					<td class="style1">The filename of the kernel image</td>
+				</tr>
+				<tr class="style1">
+					<td style="width: 117px"> <font style="font-size: 9.5pt;" face="Verdana">
+			outputImageName
+			</font>
+					</td>
+					<td>The filename of the target image which is used to store 
+					the output result</td>
+				</tr>
+				<tr class="style1">
+					<td style="width: 117px"> <font style="font-size: 9.5pt;" face="Verdana">
+					boundaryType
+			</font>
+					</td>
+					<td>The boundary type of the input blur image, if 
+					boundaryType = 0, the program assumes the pixel values 
+					outside the boundary of the latent/clear image are computed 
+					by presuming the latent signal is periodic; if boundaryType 
+					= 1, the program assumes no prior knowledge about the the 
+					pixels outside the boundary of the latent image.&nbsp; If 
+					boundaryType = 0 is used, there may be ringing artifacts 
+					around the image boundary. In this case, a Matlab function &quot;edgetaper&quot; 
+					can be used to preprocess the blur image, to reduce the 
+					ringings.</td>
+				</tr>
+				<tr class="style1">
+					<td style="width: 117px">noiseStr</td>
+					<td>A parameter which indicate the strength of noise, 
+					increase this parameter will make a result looks smooth, 
+					while reducing this parameter will make more local structure 
+					visible and may produce more visual artifacts, its default 
+					value is shown in &quot;DeconvAgent.h&quot;</td>
+				</tr>
+				<tr class="style1">
+					<td style="width: 117px">localPriorWeight</td>
+					<td>A parameter to adjust the smoothness enforced on flat 
+					regions, <font style="font-size: 9.5pt;" face="Verdana">
+        			its default value is shown in &quot;DeconvAgent.h&quot;</font></td>
+				</tr>
+			</table>
+		<h3>System Requirement:</h3>
+			<p class="style1">Windows XP, 2003 Server and Vista.</p>
+			<h3>Version Information:</h3>
+			<p class="style1">Distribution Version: 0.1 (Nov. 6th, 2008) by Qi Shan and Jiaya 
+			Jia ({qshan, leojia}@cse.cuhk.edu.hk), CSE department, the Chinese 
+			University of Hong Kong. This program is tested on Windows XP, 2003 
+			Server and Vista, but is still not guaranteed to be 
+			bug-free and work properly with all versions of Windows. It is for 
+			educational use ONLY. If you use this executable for your academic 
+			publication, please acknowledge this work:<br>
+			<br>
+			@article{hqdeblurring_siggraph2008,<br>
+			author = {Qi Shan and Jiaya Jia and Aseem Agarwala},<br>
+			title = {High-quality Motion Deblurring from a Single Image},<br>
+			journal = {ACM Transactions on Graphics (SIGGRAPH)},<br>
+			year = {2008}, <br>
+			}</p>
+		<h3>Results:</h3>
+		<table style="width: 900px" align="center">
+			<tr class="style1">
+				<td class="style4" style="width: 40%">Input Image<br>
+&nbsp;</td>
+				<td class="style4" style="width: 40%">Output Image <br>
+&nbsp;</td>
+				<td class="style4" style="width: 20%">Kernel<br>
+&nbsp;</td>
+			</tr>
+			<tr>
+				<td style="width: 262px" class="style2">
+				<img src="figures/test4_1.bmp" width="363" height="229"></td>
+				<td style="width: 300px" class="style2">
+				<img src="figures/outputTest4_1.bmp" width="363" height="229" class="style3"></td>
+				<td style="width: 139px" class="style2">
+				<img src="figures/kernel4.bmp" width="99" height="99"><br>
+				<br>
+				<font style="font-size: 9.5pt;" face="Verdana">
+        		<span class="style1">noiseStr = 0.02<br>
+				localPriorWeight = 1</span><br>
+			</font>
+				<br>
+				</td>
+			</tr>
+			<tr>
+				<td style="width: 262px" class="style2">
+				<img src="figures/redTreeBlurImage.png" width="363"></td>
+				<td style="width: 300px" class="style2">
+				<img src="figures/outputTest6.bmp" width="363"></td>
+				<td style="width: 139px" class="style2">
+				<img src="figures/outKernelRT.png" width="99"><br>
+				<br>
+				<font style="font-size: 9.5pt;" face="Verdana">
+        		<span class="style1">noiseStr = 0.008<br>
+				localPriorWeight = 20</span><br>
+			</font>
+				</td>
+			</tr>
+			<tr>
+				<td style="width: 262px" class="style2">
+				<font style="font-size: 9.5pt;" face="Verdana">
+				<img src="figures/statBlur.png" width="363"></font></td>
+				<td style="width: 300px" class="style2">
+				<img src="figures/outputTest7.png" width="363"></td>
+				<td style="width: 139px" class="style2">
+				<img src="figures/outKernelStat.png" width="99"><br>
+				<br>
+				<font style="font-size: 9.5pt;" face="Verdana">
+        		<span class="style1">noiseStr = 0.04<br>
+				localPriorWeight = 50</span></font></td>
+			</tr>
+		</table>
+			</font>
+	</td>
+       </tr>
+      </table>
+      </td>
+  </tr>
+</table>
+<br>
+<p class="style2">*** End ***</p>
+</body> 
+</html>
