@@ -296,41 +296,35 @@ export class UI {
             ctx.fillStyle = bgColor; ctx.fill();
             ctx.strokeStyle = Colors.PANEL_BORDER; ctx.lineWidth = 1; ctx.stroke();
 
-            // Tower icon (32x32)
+            // Tower icon (32x32) — use grayed out when can't afford
             const sprite = getTowerSprite(btn.type, 1, 32);
+            if (!canAfford && !isSel) {
+                ctx.globalAlpha = 0.4;
+            }
             ctx.drawImage(sprite, btn.x + 4, btn.y + 9);
+            ctx.globalAlpha = 1;
 
-            // Name (17pt)
+            // Name (17pt, top-left after icon)
             ctx.fillStyle = textColor; ctx.font = '17px Arial';
             ctx.fillText(data.name, btn.x + 38, btn.y + 16);
 
-            // Cost (right-aligned)
+            // Cost (17pt, right-aligned)
             ctx.fillStyle = canAfford ? Colors.GOLD : Colors.TEXT_DARK;
             ctx.font = '17px Arial';
             const costStr = `${data.cost}g`;
             const costW = ctx.measureText(costStr).width;
             ctx.fillText(costStr, btn.x + btn.w - costW - 4, btn.y + 16);
 
-            // Stats line 1: key combat stats
+            // Stats line 1 (14px, always shown)
             ctx.font = '14px Arial'; ctx.fillStyle = statColor;
             if (data.damage > 0) {
-                const stats1 = `Dmg:${data.damage}  Rng:${data.range.toFixed(1)}  Spd:${data.fire_rate}s`;
-                ctx.fillText(stats1, btn.x + 38, btn.y + 32);
-            } else if (btn.type === TowerType.AURA) {
-                ctx.fillText('Buffs nearby towers', btn.x + 38, btn.y + 32);
-            } else if (btn.type === TowerType.HARRY_DUCK) {
-                ctx.fillText(`Duck: ${data.duck_damage || 15}dmg ${data.duck_hp || 80}hp`, btn.x + 38, btn.y + 32);
-            } else if (btn.type === TowerType.GOLD_MINE) {
-                const goldColor = canAfford ? Colors.GOLD : 'rgb(80,80,60)';
-                ctx.fillStyle = goldColor;
-                ctx.fillText(`${data.gold_per_tick}g every ${data.tick_interval}s`, btn.x + 38, btn.y + 32);
-            }
-
-            // Stats line 2: damage type + traits
-            if (canAfford || isSel) {
-                ctx.fillStyle = statColor; ctx.font = '14px Arial';
-                if (data.damage_type) {
-                    const traits = [data.damage_type.charAt(0).toUpperCase() + data.damage_type.slice(1)];
+                // Attacking tower: Dmg/Rng/Spd
+                ctx.fillText(`Dmg:${data.damage}  Rng:${data.range.toFixed(1)}  Spd:${data.fire_rate}s`, btn.x + 38, btn.y + 32);
+                // Stats line 2: damage type + traits (only if affordable or selected)
+                if (canAfford || isSel) {
+                    ctx.fillStyle = statColor; ctx.font = '14px Arial';
+                    const dtype = data.damage_type ? (data.damage_type.charAt(0).toUpperCase() + data.damage_type.slice(1)) : '';
+                    const traits = [dtype];
                     if (data.splash_radius > 0) traits.push(`AoE:${data.splash_radius}`);
                     if (data.chain_count > 0) traits.push(`Chain:${data.chain_count}`);
                     if (data.burn_dps > 0) traits.push('Burn');
@@ -338,12 +332,35 @@ export class UI {
                     if (data.is_aoe_pulse) traits.push('Pulse AoE');
                     ctx.fillText(traits.join('  '), btn.x + 38, btn.y + 46);
                 }
+            } else if (btn.type === TowerType.AURA) {
+                ctx.fillText('Buffs nearby towers', btn.x + 38, btn.y + 32);
+                if (canAfford || isSel) {
+                    ctx.fillText(`Range: ${data.range.toFixed(1)}`, btn.x + 38, btn.y + 46);
+                }
+            } else if (btn.type === TowerType.HARRY_DUCK) {
+                const duckDmg = data.duck_damage || 15;
+                const duckHP = data.duck_hp || 80;
+                const interval = data.spawn_interval || 6;
+                ctx.fillText(`Duck: ${duckDmg}dmg ${duckHP}hp`, btn.x + 38, btn.y + 32);
+                if (canAfford || isSel) {
+                    ctx.fillText(`Spawn every ${interval}s`, btn.x + 38, btn.y + 46);
+                }
+            } else if (btn.type === TowerType.GOLD_MINE) {
+                const gpt = data.gold_per_tick || 3;
+                const interval = data.tick_interval || 5;
+                ctx.fillStyle = canAfford ? Colors.GOLD : 'rgb(80,80,60)';
+                ctx.fillText(`${gpt}g every ${interval}s`, btn.x + 38, btn.y + 32);
+                if (canAfford || isSel) {
+                    ctx.fillStyle = statColor; ctx.font = '14px Arial';
+                    ctx.fillText(`(${(gpt * 60 / interval).toFixed(0)}g/min)`, btn.x + 38, btn.y + 46);
+                }
             }
 
-            // Not enough gold warning
+            // Not enough gold warning (replaces stats line 2)
             if (!canAfford && !isSel) {
+                const shortfall = data.cost - gold;
                 ctx.fillStyle = 'rgb(160,80,80)'; ctx.font = '14px Arial';
-                ctx.fillText(`Need ${data.cost - gold}g more`, btn.x + 38, btn.y + 46);
+                ctx.fillText(`Need ${shortfall}g more`, btn.x + 38, btn.y + 46);
             }
         }
     }
