@@ -4,12 +4,15 @@ export const TILE_SIZE = 32;
 export const GRID_WIDTH = 30;
 export const GRID_HEIGHT = 20;
 export const PANEL_WIDTH = 280;
-export const HUD_HEIGHT = 50;
-export const BOTTOM_BAR_HEIGHT = 40;
-export const SCREEN_WIDTH = GRID_WIDTH * TILE_SIZE + PANEL_WIDTH;
-export const SCREEN_HEIGHT = GRID_HEIGHT * TILE_SIZE + HUD_HEIGHT + BOTTOM_BAR_HEIGHT;
+export const TOP_BAR_HEIGHT = 50;
+export const BOTTOM_BAR_HEIGHT = 50;
+export const EXTRA_HEIGHT = 40;
+export const SCREEN_WIDTH = GRID_WIDTH * TILE_SIZE + PANEL_WIDTH;  // 1240
+export const SCREEN_HEIGHT = GRID_HEIGHT * TILE_SIZE + TOP_BAR_HEIGHT + BOTTOM_BAR_HEIGHT + EXTRA_HEIGHT;  // 780
 export const GRID_OFFSET_X = 0;
-export const GRID_OFFSET_Y = HUD_HEIGHT;
+export const GRID_OFFSET_Y = TOP_BAR_HEIGHT;
+// Aliases for backward compat
+export const HUD_HEIGHT = TOP_BAR_HEIGHT;
 
 // Game states
 export const GameState = {
@@ -152,19 +155,22 @@ export const PROJECTILE_SPEEDS = {
     [TowerType.DOOM_SPIRE]: 0,
 };
 
-// Colors
+// Colors — match Python version exactly (RGB tuples → hex)
 export const Colors = {
     // UI
-    BG: '#1a1a2e',
-    BG_LIGHT: '#282846',
-    PANEL: '#1e1e37',
-    PANEL_BORDER: '#3c3c64',
-    ACCENT: '#e6b800',
-    DANGER: '#ff4444',
+    BG: '#1a1a2e',         // (26, 26, 46)
+    BG_LIGHT: '#282846',   // (40, 40, 70)
+    PANEL: '#1e1e37',      // (30, 30, 55)
+    PANEL_BORDER: '#3c3c64', // (60, 60, 100)
+    ACCENT: '#e6b800',     // (230, 184, 0)
+    DANGER: '#ff4444',     // (255, 68, 68)
+    SUCCESS: '#44ff44',    // (68, 255, 68)
     TEXT: '#ffffff',
-    TEXT_DIM: '#c8c8c8',
-    TEXT_DARK: '#888888',
-    GOLD: '#ffd700',
+    TEXT_DIM: '#c8c8c8',   // (200, 200, 200)
+    TEXT_DARK: '#969696',  // (150, 150, 150)
+    GOLD: '#ffd700',       // (255, 215, 0)
+    BLACK: '#000000',
+    WHITE: '#ffffff',
 
     // Tiles
     GRASS_DARK: '#4a7c2e',

@@ -150,6 +150,7 @@ export class Game {
         if (this.input.consumeClick()) {
             const btn = this.ui.getMenuButtonAt(this.input.mouseX, this.input.mouseY, GameState.PAUSED);
             if (btn === 'resume') this.state = GameState.COMBAT;
+            if (btn === 'restart') this.startMap(this.selectedMapIndex);
             if (btn === 'main_menu') this.state = GameState.MAIN_MENU;
         }
         if (this.input.consumeKey('escape') || this.input.consumeKey(' ')) {
@@ -232,6 +233,7 @@ export class Game {
                 else if (towerBtn === 'spec_B') this.specializeTower('B');
                 else if (towerBtn === 'aura_speed') this.selectedTower.auraBuff = 'attack_speed';
                 else if (towerBtn === 'aura_damage') this.selectedTower.auraBuff = 'damage';
+                else if (towerBtn === 'deselect') this.deselectTower();
                 else if (this.input.isOnGrid) {
                     // Click on grid - select/deselect
                     this.handleGridClick();
@@ -766,7 +768,7 @@ export class Game {
 
         // UI
         const aliveEnemies = this.enemies.filter(e => e.alive && !e.reachedExit).length;
-        this.ui.drawHUD(this.ctx, this.gold, this.lives, this.wave, aliveEnemies);
+        this.ui.drawHUD(this.ctx, this.gold, this.lives, this.wave, aliveEnemies, this.state, this.speedMultiplier);
         this.ui.drawBottomBar(this.ctx, this.state, this.speedMultiplier);
         this.ui.drawShopPanel(this.ctx, this.gold, this.selectedTower, this.placingTowerType);
 
