@@ -343,7 +343,7 @@ export const TOWER_DATA = {
 
     [TowerType.DOOM_SPIRE]: {
         name: "Doom Spire",
-        cost: 500,
+        cost: 1000,
         damage: 150,
         damage_type: DamageType.ENERGY,
         range: 6.0,
