@@ -100,6 +100,7 @@ export class UI {
             if (this._hitRect(mx, my, cx - 160, by, 320, 58)) return 'play';
             if (this._hitRect(mx, my, cx - 160, by + 68, 320, 58)) return 'workshop';
             if (this._hitRect(mx, my, cx - 160, by + 136, 320, 58)) return 'editor';
+            if (this._hitRect(mx, my, cx - 160, by + 204, 320, 58)) return 'quit';
             return null;
         }
         if (gameState === GameState.MAP_SELECT) {

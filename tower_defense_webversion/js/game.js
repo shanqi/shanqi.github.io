@@ -110,6 +110,7 @@ export class Game {
     }
 
     update(dt) {
+        if (this._quit) return;
         if (this.state === GameState.MAIN_MENU || this.state === GameState.MAP_SELECT) {
             this.handleMenuInput();
             return;
@@ -166,6 +167,20 @@ export class Game {
                 else if (btn === 'editor') {
                     this.mapEditor = new MapEditor();
                     this.state = GameState.EDITOR;
+                }
+                else if (btn === 'quit') {
+                    // Web can't close the tab, so show a thank-you and stop the game loop
+                    this.ctx.fillStyle = '#1a1a2e';
+                    this.ctx.fillRect(0, 0, 1240, 780);
+                    this.ctx.fillStyle = '#e6b800';
+                    this.ctx.font = 'bold 36px Arial';
+                    this.ctx.textAlign = 'center';
+                    this.ctx.fillText('Thanks for playing!', 620, 370);
+                    this.ctx.fillStyle = '#969696';
+                    this.ctx.font = '17px Arial';
+                    this.ctx.fillText('You can close this tab now.', 620, 410);
+                    this.ctx.textAlign = 'left';
+                    this._quit = true;
                 }
             } else if (this.state === GameState.MAP_SELECT) {
                 if (btn?.startsWith('map_')) {
