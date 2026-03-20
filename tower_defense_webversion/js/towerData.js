@@ -65,6 +65,7 @@ export const TOWER_DATA = {
         damage: 25,
         damage_type: DamageType.ENERGY,
         range: 3.5,
+        requires_unlock: 'mage_tower',
         fire_rate: 1.0,
         splash_radius: 0,
         target_mode: TargetMode.FIRST,
@@ -282,6 +283,7 @@ export const TOWER_DATA = {
         damage: 0,
         damage_type: null,
         range: 3.0,
+        requires_unlock: 'aura_tower',
         fire_rate: 0,
         splash_radius: 0,
         target_mode: TargetMode.FIRST,
@@ -323,7 +325,7 @@ export const TOWER_DATA = {
         is_economy: true,
         gold_per_tick: 3,
         tick_interval: 5,
-        upgrade_costs: [40, 60, 85, 115, 150, 195, 250],
+        upgrade_costs: [30, 50, 70, 90, 120, 155, 200],
         specializations: {
             A: {
                 name: "Treasury",

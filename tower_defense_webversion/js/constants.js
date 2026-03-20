@@ -118,7 +118,7 @@ export const ARMOR_MATRIX = {
 };
 
 // Economy
-export const STARTING_GOLD = 200;
+export const STARTING_GOLD = 400;
 export const STARTING_LIVES = 20;
 export const INTEREST_RATE = 0.02;
 export const INTEREST_CAP = 10;

@@ -291,7 +291,7 @@ export class UI {
 
     // ─── Shop Panel ─────────────────────────────
 
-    drawShopPanel(ctx, gold, selectedTower, selectedType) {
+    drawShopPanel(ctx, gold, selectedTower, selectedType, unlocks = {}) {
         // Panel bg
         ctx.fillStyle = Colors.PANEL;
         ctx.fillRect(PANEL_X, PANEL_Y, PANEL_WIDTH, PANEL_H);
@@ -317,6 +317,32 @@ export class UI {
         // Tower buttons
         for (const btn of this.shopButtons) {
             const data = TOWER_DATA[btn.type];
+
+            // Check if tower requires unlock
+            if (data.requires_unlock && !unlocks[data.requires_unlock]) {
+                // Locked tower
+                roundRect(ctx, btn.x, btn.y, btn.w, btn.h, 4);
+                ctx.fillStyle = 'rgb(30,30,38)'; ctx.fill();
+                ctx.strokeStyle = 'rgb(80,60,60)'; ctx.lineWidth = 1; ctx.stroke();
+                // Grayed icon
+                const sprite = getTowerSprite(btn.type, 1, 32);
+                ctx.globalAlpha = 0.3;
+                ctx.drawImage(sprite, btn.x + 4, btn.y + 9);
+                ctx.globalAlpha = 1;
+                // Lock icon
+                ctx.fillStyle = Colors.TEXT_DARK; ctx.font = 'bold 14px Arial';
+                ctx.fillText('\u{1F512}', btn.x + btn.w - 24, btn.y + 16);
+                // Name
+                ctx.fillStyle = Colors.TEXT_DARK; ctx.font = '17px Arial';
+                ctx.fillText(data.name, btn.x + 38, btn.y + 16);
+                // Hint
+                ctx.fillStyle = 'rgb(120,90,90)'; ctx.font = '14px Arial';
+                ctx.fillText('Unlock in Workshop', btn.x + 38, btn.y + 32);
+                ctx.fillStyle = 'rgb(80,80,80)';
+                ctx.fillText(`${data.cost}g`, btn.x + 38, btn.y + 46);
+                continue;
+            }
+
             const canAfford = gold >= data.cost;
             const isSel = selectedType === btn.type;
 

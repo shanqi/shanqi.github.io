@@ -269,12 +269,12 @@ export class Game {
     handlePauseInput() {
         if (this.input.consumeClick()) {
             const btn = this.ui.getMenuButtonAt(this.input.mouseX, this.input.mouseY, GameState.PAUSED);
-            if (btn === 'resume') this.state = GameState.COMBAT;
+            if (btn === 'resume') this.state = this._prevState || GameState.PREP;
             if (btn === 'restart') this.startMap(this.selectedMapIndex);
             if (btn === 'main_menu') this.state = GameState.MAIN_MENU;
         }
         if (this.input.consumeKey('escape') || this.input.consumeKey(' ')) {
-            this.state = GameState.COMBAT;
+            this.state = this._prevState || GameState.PREP;
         }
         this.input.clearFrame();
     }
@@ -304,7 +304,8 @@ export class Game {
                 this.placingTowerType = null;
             } else if (this.selectedTower) {
                 this.deselectTower();
-            } else if (this.state === GameState.COMBAT) {
+            } else if (this.state === GameState.COMBAT || this.state === GameState.PREP) {
+                this._prevState = this.state;
                 this.state = GameState.PAUSED;
             }
         }
@@ -350,7 +351,10 @@ export class Game {
             } else if (bottomBtn === 'speed_4x') {
                 this.speedMultiplier = this.speedMultiplier === 4 ? 1 : 4;
             } else if (bottomBtn === 'pause') {
-                if (this.state === GameState.COMBAT) this.state = GameState.PAUSED;
+                if (this.state === GameState.COMBAT || this.state === GameState.PREP) {
+                    this._prevState = this.state;
+                    this.state = GameState.PAUSED;
+                }
             }
 
             // Shop panel
@@ -423,6 +427,9 @@ export class Game {
         const type = this.placingTowerType;
         const data = TOWER_DATA[type];
         if (this.gold < data.cost) return;
+
+        // Check if tower requires unlock
+        if (data.requires_unlock && !this.saveData.unlocks[data.requires_unlock]) return;
 
         // Gold mine limit
         if (type === TowerType.GOLD_MINE && this.goldMineCount >= MAX_GOLD_MINES) return;
@@ -590,6 +597,7 @@ export class Game {
                     this.lives = 0;
                     this.state = GameState.LOST;
                     this.effects.addAnnouncement('GAME OVER', '#ff4444');
+                    return; // Stop processing immediately
                 }
             }
         }
@@ -982,7 +990,7 @@ export class Game {
         const curWave = this.getCurrentWaveInfo();
         this.ui.drawHUD(this.ctx, this.gold, this.lives, this.wave, aliveEnemies, this.state, this.speedMultiplier);
         this.ui.drawBottomBar(this.ctx, this.state, this.speedMultiplier, nextWave, curWave);
-        this.ui.drawShopPanel(this.ctx, this.gold, this.selectedTower, this.placingTowerType);
+        this.ui.drawShopPanel(this.ctx, this.gold, this.selectedTower, this.placingTowerType, this.saveData.unlocks);
 
         // Overlay menus
         if (this.state === GameState.PAUSED) this.ui.drawPauseMenu(this.ctx);
