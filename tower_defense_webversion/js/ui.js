@@ -96,11 +96,14 @@ export class UI {
     getMenuButtonAt(mx, my, gameState) {
         const cx = SCREEN_WIDTH / 2;
         if (gameState === GameState.MAIN_MENU) {
-            if (this._hitRect(mx, my, cx - 160, 420, 320, 58)) return 'play';
+            const by = this._menuBtnStartY || 330;
+            if (this._hitRect(mx, my, cx - 160, by, 320, 58)) return 'play';
+            if (this._hitRect(mx, my, cx - 160, by + 68, 320, 58)) return 'workshop';
+            if (this._hitRect(mx, my, cx - 160, by + 136, 320, 58)) return 'editor';
             return null;
         }
         if (gameState === GameState.MAP_SELECT) {
-            for (let i = 0; i < 5; i++) {
+            for (let i = 0; i < 10; i++) { // support up to 10 maps (5 built-in + custom)
                 if (this._hitRect(mx, my, cx - 200, 100 + i * 70, 400, 60)) return `map_${i}`;
             }
             if (this._hitRect(mx, my, 20, SCREEN_HEIGHT - 60, 120, 40)) return 'back';
@@ -213,7 +216,7 @@ export class UI {
 
     // ─── Bottom Bar ─────────────────────────────
 
-    drawBottomBar(ctx, gameState, speedMult) {
+    drawBottomBar(ctx, gameState, speedMult, nextWaveInfo, curWaveInfo) {
         const barY = SCREEN_HEIGHT - BOTTOM_BAR_HEIGHT;
 
         // Gradient (opposite direction from top)
@@ -249,11 +252,38 @@ export class UI {
         this._drawRoundBtn(ctx, { x: 240, y: btnY, w: 52, h: 34 }, '4x',
             is4x ? '#ff6633' : Colors.BG_LIGHT, is4x ? Colors.BLACK : Colors.TEXT, 6, 'bold 20px Arial');
 
-        // Wave info (right side)
-        if (gameState === GameState.COMBAT) {
+        // Next wave preview (during PREP)
+        if (nextWaveInfo && isPrep) {
+            ctx.fillStyle = Colors.TEXT_DARK; ctx.font = '14px Arial';
+            ctx.fillText('Next:', 310, barY + 20);
+            let xOff = 310 + ctx.measureText('Next: ').width + 4;
+            const enemyColors = {
+                grunt: '#50b43c', runner: '#3c8cdc', tank: '#c83c3c', ghost: '#b4a0dc',
+                healer: '#78c850', wasp: '#e6c832', disruptor: '#8c3cb4', summoner: '#3ca08c',
+                imp: '#dc5050', boss: '#7828b4',
+            };
+            for (const etype of nextWaveInfo.enemyTypes) {
+                ctx.fillStyle = enemyColors[etype] || '#888';
+                ctx.beginPath();
+                ctx.arc(xOff + 6, barY + 17, 6, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.fillStyle = '#fff'; ctx.font = '9px Arial';
+                const label = etype.charAt(0).toUpperCase();
+                ctx.textAlign = 'center';
+                ctx.fillText(label, xOff + 6, barY + 20);
+                ctx.textAlign = 'left';
+                xOff += 18;
+            }
+            ctx.fillStyle = Colors.TEXT_DIM; ctx.font = '14px Arial';
+            ctx.fillText(`(${nextWaveInfo.totalEnemies} enemies)`, xOff + 4, barY + 20);
+        }
+
+        // Current wave info (right side, during COMBAT)
+        if (curWaveInfo && gameState === GameState.COMBAT) {
+            const infoText = `Wave ${curWaveInfo.wave}: ${curWaveInfo.totalEnemies} enemies`;
             ctx.fillStyle = Colors.TEXT_DARK; ctx.font = '14px Arial';
             ctx.textAlign = 'right';
-            ctx.fillText('Wave in progress...', PANEL_X - 10, barY + 28);
+            ctx.fillText(infoText, PANEL_X - 10, barY + 28);
             ctx.textAlign = 'left';
         }
     }
@@ -584,7 +614,7 @@ export class UI {
 
     // ─── Main Menu ─────────────────────────────
 
-    drawMainMenu(ctx) {
+    drawMainMenu(ctx, essence = 0) {
         ctx.fillStyle = Colors.BG;
         ctx.fillRect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
         const cx = SCREEN_WIDTH / 2;
@@ -621,11 +651,24 @@ export class UI {
         ctx.strokeStyle = Colors.PANEL_BORDER;
         ctx.beginPath(); ctx.moveTo(cx - 180, 300); ctx.lineTo(cx + 180, 300); ctx.stroke();
 
+        // Essence display
+        let btnStartY = 330;
+        if (essence > 0) {
+            ctx.fillStyle = Colors.TEXT_DARK; ctx.font = '14px Arial';
+            ctx.fillText('ESSENCE', cx, 318);
+            ctx.fillStyle = '#9933ff'; ctx.font = 'bold 28px Arial';
+            ctx.fillText(String(essence), cx, 348);
+            btnStartY = 375;
+        }
+
         // Buttons
-        this._drawMenuButton(ctx, { x: cx - 160, y: 420, w: 320, h: 58 }, 'Play Game', Colors.ACCENT, Colors.BLACK);
-        this._drawMenuButton(ctx, { x: cx - 160, y: 498, w: 320, h: 58 }, 'Workshop', Colors.BG_LIGHT, Colors.TEXT);
-        this._drawMenuButton(ctx, { x: cx - 160, y: 576, w: 320, h: 58 }, 'Map Editor', Colors.BG_LIGHT, Colors.TEXT);
-        this._drawMenuButton(ctx, { x: cx - 160, y: 654, w: 320, h: 58 }, 'Quit', 'rgb(40,40,50)', Colors.TEXT_DIM);
+        this._drawMenuButton(ctx, { x: cx - 160, y: btnStartY, w: 320, h: 58 }, 'Play Game', Colors.ACCENT, Colors.BLACK);
+        this._drawMenuButton(ctx, { x: cx - 160, y: btnStartY + 68, w: 320, h: 58 }, 'Workshop', Colors.BG_LIGHT, Colors.TEXT);
+        this._drawMenuButton(ctx, { x: cx - 160, y: btnStartY + 136, w: 320, h: 58 }, 'Map Editor', Colors.BG_LIGHT, Colors.TEXT);
+        this._drawMenuButton(ctx, { x: cx - 160, y: btnStartY + 204, w: 320, h: 58 }, 'Quit', 'rgb(40,40,50)', Colors.TEXT_DIM);
+
+        // Store button positions for hit testing
+        this._menuBtnStartY = btnStartY;
 
         // Footer
         ctx.fillStyle = 'rgb(60,60,80)'; ctx.font = '14px Arial';
@@ -693,33 +736,45 @@ export class UI {
 
     // ─── Win/Lose Screens ─────────────────────────────
 
-    drawWinScreen(ctx, wave) {
+    drawWinScreen(ctx, wave, bossesKilled = 0, totalKills = 0) {
         ctx.fillStyle = 'rgba(0,0,0,0.71)';
         ctx.fillRect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
         const cx = SCREEN_WIDTH / 2;
 
         ctx.fillStyle = Colors.ACCENT; ctx.font = 'bold 44px Arial'; ctx.textAlign = 'center';
-        ctx.fillText('VICTORY!', cx, 260);
+        ctx.fillText('VICTORY!', cx, 240);
 
         ctx.fillStyle = Colors.TEXT; ctx.font = '17px Arial';
-        ctx.fillText(`Waves Completed: ${wave}`, cx, 320);
-        ctx.fillText(`Score: ${wave * 100}`, cx, 350);
+        ctx.fillText(`Waves Completed: ${wave}`, cx, 300);
+        ctx.fillText(`Enemies Killed: ${totalKills}`, cx, 325);
+        ctx.fillText(`Bosses Slain: ${bossesKilled}`, cx, 350);
+
+        // Essence preview
+        const ess = wave * 10 + bossesKilled * 100 + 500;
+        ctx.fillStyle = '#9933ff'; ctx.font = 'bold 22px Arial';
+        ctx.fillText(`Essence Earned: +${ess}`, cx, 400);
 
         this._drawMenuButton(ctx, { x: cx - 140, y: 520, w: 280, h: 50 }, 'Continue', Colors.ACCENT, Colors.BLACK);
         ctx.textAlign = 'left';
     }
 
-    drawLoseScreen(ctx, wave) {
+    drawLoseScreen(ctx, wave, bossesKilled = 0, totalKills = 0) {
         ctx.fillStyle = 'rgba(0,0,0,0.71)';
         ctx.fillRect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
         const cx = SCREEN_WIDTH / 2;
 
         ctx.fillStyle = Colors.DANGER; ctx.font = 'bold 44px Arial'; ctx.textAlign = 'center';
-        ctx.fillText('DEFEAT', cx, 260);
+        ctx.fillText('DEFEAT', cx, 240);
 
         ctx.fillStyle = Colors.TEXT; ctx.font = '17px Arial';
-        ctx.fillText(`Waves Completed: ${wave}`, cx, 320);
-        ctx.fillText(`Score: ${wave * 100}`, cx, 350);
+        ctx.fillText(`Waves Completed: ${wave}`, cx, 300);
+        ctx.fillText(`Enemies Killed: ${totalKills}`, cx, 325);
+        ctx.fillText(`Bosses Slain: ${bossesKilled}`, cx, 350);
+
+        // Essence preview
+        const ess = wave * 10 + bossesKilled * 100;
+        ctx.fillStyle = '#9933ff'; ctx.font = 'bold 22px Arial';
+        ctx.fillText(`Essence Earned: +${ess}`, cx, 400);
 
         this._drawMenuButton(ctx, { x: cx - 140, y: 520, w: 280, h: 50 }, 'Continue', Colors.ACCENT, Colors.BLACK);
         ctx.textAlign = 'left';

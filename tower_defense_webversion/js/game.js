@@ -20,6 +20,9 @@ import { EffectSystem } from './effects.js';
 import { Renderer } from './renderer.js';
 import { UI } from './ui.js';
 import { InputManager } from './input.js';
+import { loadSaveData, saveSaveData, calculateEssence } from './saveData.js';
+import { Workshop } from './workshop.js';
+import { MapEditor } from './mapEditor.js';
 
 export class Game {
     constructor(canvas) {
@@ -34,6 +37,11 @@ export class Game {
         this.maps = MAP_DATA;
         this.selectedMapIndex = 0;
         this.speedMultiplier = 1;
+
+        // Save data
+        this.saveData = loadSaveData();
+        this.workshop = new Workshop();
+        this.mapEditor = null;
 
         // Game data (initialized on map load)
         this.gold = 0;
@@ -62,6 +70,11 @@ export class Game {
         this.perfectWave = true;
         this.goldMineCount = 0;
 
+        // Essence tracking
+        this.bossesKilled = 0;
+        this.totalKills = 0;
+        this.essenceEarned = 0;
+
         // Make tower data available to projectiles
         window.__TOWER_DATA = TOWER_DATA;
     }
@@ -74,8 +87,10 @@ export class Game {
         this.exits = map.exits;
         this.routes = findAllRoutes(this.tiles, this.spawns, this.exits);
 
-        this.gold = STARTING_GOLD;
-        this.lives = STARTING_LIVES;
+        // Apply workshop upgrades
+        const upg = this.saveData.upgrades;
+        this.gold = STARTING_GOLD + (upg.starting_economy || 0) * 50;
+        this.lives = STARTING_LIVES + (upg.better_lives || 0) * 5;
         this.wave = 0;
         this.towers = [];
         this.enemies = [];
@@ -86,6 +101,9 @@ export class Game {
         this.waveActive = false;
         this.speedMultiplier = 1;
         this.goldMineCount = 0;
+        this.bossesKilled = 0;
+        this.totalKills = 0;
+        this.essenceEarned = 0;
         this.effects = new EffectSystem();
 
         this.state = GameState.PREP;
@@ -94,6 +112,16 @@ export class Game {
     update(dt) {
         if (this.state === GameState.MAIN_MENU || this.state === GameState.MAP_SELECT) {
             this.handleMenuInput();
+            return;
+        }
+
+        if (this.state === GameState.WORKSHOP) {
+            this.handleWorkshopInput();
+            return;
+        }
+
+        if (this.state === GameState.EDITOR) {
+            this.handleEditorInput(dt);
             return;
         }
 
@@ -121,7 +149,7 @@ export class Game {
             this.updateEnemyAbilities(gameDt);
             this.checkWaveComplete();
         } else if (this.state === GameState.PREP) {
-            this.updateTowers(gameDt); // Gold mines still work
+            // No tower updates during prep — gold mines and spawners only work in combat
         }
 
         this.updateSynergies();
@@ -132,8 +160,13 @@ export class Game {
     handleMenuInput() {
         if (this.input.consumeClick()) {
             const btn = this.ui.getMenuButtonAt(this.input.mouseX, this.input.mouseY, this.state);
-            if (this.state === GameState.MAIN_MENU && btn === 'play') {
-                this.state = GameState.MAP_SELECT;
+            if (this.state === GameState.MAIN_MENU) {
+                if (btn === 'play') this.state = GameState.MAP_SELECT;
+                else if (btn === 'workshop') this.state = GameState.WORKSHOP;
+                else if (btn === 'editor') {
+                    this.mapEditor = new MapEditor();
+                    this.state = GameState.EDITOR;
+                }
             } else if (this.state === GameState.MAP_SELECT) {
                 if (btn?.startsWith('map_')) {
                     const idx = parseInt(btn.split('_')[1]);
@@ -144,6 +177,78 @@ export class Game {
             }
         }
         this.input.clearFrame();
+    }
+
+    handleWorkshopInput() {
+        if (this.input.consumeClick()) {
+            const result = this.workshop.handleClick(this.input.mouseX, this.input.mouseY, this.saveData);
+            if (result === 'back') {
+                saveSaveData(this.saveData);
+                this.state = GameState.MAIN_MENU;
+            }
+        }
+        if (this.input.consumeKey('escape')) {
+            saveSaveData(this.saveData);
+            this.state = GameState.MAIN_MENU;
+        }
+        this.input.clearFrame();
+    }
+
+    handleEditorInput(dt) {
+        if (!this.mapEditor) return;
+        this.mapEditor.update(dt);
+
+        if (this.input.consumeClick()) {
+            const result = this.mapEditor.handleMouseDown(this.input.mouseX, this.input.mouseY, 0);
+            if (result === 'quit') {
+                this._loadCustomMaps();
+                this.mapEditor = null;
+                this.state = GameState.MAIN_MENU;
+            }
+        }
+        if (this.input.consumeRightClick()) {
+            this.mapEditor.handleMouseDown(this.input.mouseX, this.input.mouseY, 2);
+        }
+
+        // Mouse move for painting
+        this.mapEditor.handleMouseMove(this.input.mouseX, this.input.mouseY);
+
+        // Check for mouse up (simplified — clear painting on no button held)
+        if (!this.input.keysPressed.has('_mousedown')) {
+            this.mapEditor.handleMouseUp();
+        }
+
+        // Keyboard shortcuts
+        for (const key of ['escape', 'v', 'c', 'g', 'z', '0', '1', '2', '3', '4', '5', '6', '7']) {
+            if (this.input.consumeKey(key)) {
+                const result = this.mapEditor.handleKeyDown(key, this.input.keysPressed.has('control') || this.input.keysPressed.has('meta'));
+                if (result === 'quit') {
+                    this._loadCustomMaps();
+                    this.mapEditor = null;
+                    this.state = GameState.MAIN_MENU;
+                }
+            }
+        }
+        this.input.clearFrame();
+    }
+
+    _loadCustomMaps() {
+        // Scan localStorage for custom maps and add them to this.maps
+        const baseCount = MAP_DATA.length;
+        this.maps = [...MAP_DATA];
+        for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            if (key?.startsWith('custom_map_')) {
+                try {
+                    const data = JSON.parse(localStorage.getItem(key));
+                    if (data.tiles && data.spawns && data.exits) {
+                        data.name = '[Custom] ' + (data.name || 'Unnamed');
+                        data.difficulty = data.difficulty || 'Custom';
+                        this.maps.push(data);
+                    }
+                } catch (e) { /* skip corrupt */ }
+            }
+        }
     }
 
     handlePauseInput() {
@@ -162,7 +267,17 @@ export class Game {
     handleEndInput() {
         if (this.input.consumeClick()) {
             const btn = this.ui.getMenuButtonAt(this.input.mouseX, this.input.mouseY, this.state);
-            if (btn === 'main_menu') this.state = GameState.MAIN_MENU;
+            if (btn === 'main_menu') {
+                // Award essence and save stats
+                const won = this.state === GameState.WON;
+                this.essenceEarned = calculateEssence(this.wave, this.bossesKilled, won);
+                this.saveData.essence += this.essenceEarned;
+                this.saveData.stats.games_played++;
+                this.saveData.stats.best_wave = Math.max(this.saveData.stats.best_wave, this.wave);
+                this.saveData.stats.total_kills += this.totalKills;
+                saveSaveData(this.saveData);
+                this.state = GameState.MAIN_MENU;
+            }
         }
         this.input.clearFrame();
     }
@@ -325,7 +440,17 @@ export class Game {
 
     specializeTower(choice) {
         if (!this.selectedTower || this.selectedTower.specialization) return;
-        this.selectedTower.specialize(choice);
+        const tower = this.selectedTower;
+
+        // At level 7, specializing also performs the upgrade to level 8
+        if (tower.level === 7) {
+            const cost = tower.upgradeCost;
+            if (!cost || this.gold < cost) return;
+            this.gold -= cost;
+            tower.upgrade(); // 7 → 8
+        }
+
+        tower.specialize(choice);
     }
 
     sellTower() {
@@ -482,8 +607,11 @@ export class Game {
 
             // Boss death screen shake
             if (e.type === EnemyType.BOSS) {
-                this.effects.addScreenShake(0.3, 4);
+                this.effects.addScreenShake(0.5, 8);
+                this.bossesKilled++;
             }
+
+            this.totalKills++;
         }
 
         // Cleanup
@@ -760,16 +888,50 @@ export class Game {
         }
     }
 
+    // Get wave preview info for upcoming wave
+    getNextWaveInfo() {
+        const nextIdx = this.wave; // 0-indexed next wave (wave is 1-indexed current)
+        if (nextIdx >= WAVE_DATA.length) return null;
+        const wd = WAVE_DATA[nextIdx];
+        const types = new Set();
+        let total = 0;
+        for (const sw of wd.subwaves) {
+            types.add(sw.enemy_type);
+            total += sw.count;
+        }
+        return { wave: nextIdx + 1, enemyTypes: [...types], totalEnemies: total };
+    }
+
+    getCurrentWaveInfo() {
+        if (this.wave <= 0 || this.wave > WAVE_DATA.length) return null;
+        const wd = WAVE_DATA[this.wave - 1];
+        let total = 0;
+        for (const sw of wd.subwaves) total += sw.count;
+        return { wave: this.wave, totalEnemies: total, bonusGold: wd.bonus_gold };
+    }
+
     draw() {
         this.renderer.clear();
 
         if (this.state === GameState.MAIN_MENU) {
-            this.ui.drawMainMenu(this.ctx);
+            this.ui.drawMainMenu(this.ctx, this.saveData.essence);
             return;
         }
 
         if (this.state === GameState.MAP_SELECT) {
             this.ui.drawMapSelect(this.ctx, this.maps);
+            return;
+        }
+
+        if (this.state === GameState.WORKSHOP) {
+            this.workshop.draw(this.ctx, this.saveData);
+            return;
+        }
+
+        if (this.state === GameState.EDITOR) {
+            if (this.mapEditor) {
+                this.mapEditor.draw(this.ctx, this.input.mouseX, this.input.mouseY);
+            }
             return;
         }
 
@@ -801,13 +963,15 @@ export class Game {
 
         // UI
         const aliveEnemies = this.enemies.filter(e => e.alive && !e.reachedExit).length;
+        const nextWave = this.getNextWaveInfo();
+        const curWave = this.getCurrentWaveInfo();
         this.ui.drawHUD(this.ctx, this.gold, this.lives, this.wave, aliveEnemies, this.state, this.speedMultiplier);
-        this.ui.drawBottomBar(this.ctx, this.state, this.speedMultiplier);
+        this.ui.drawBottomBar(this.ctx, this.state, this.speedMultiplier, nextWave, curWave);
         this.ui.drawShopPanel(this.ctx, this.gold, this.selectedTower, this.placingTowerType);
 
         // Overlay menus
         if (this.state === GameState.PAUSED) this.ui.drawPauseMenu(this.ctx);
-        if (this.state === GameState.WON) this.ui.drawWinScreen(this.ctx, this.wave);
-        if (this.state === GameState.LOST) this.ui.drawLoseScreen(this.ctx, this.wave);
+        if (this.state === GameState.WON) this.ui.drawWinScreen(this.ctx, this.wave, this.bossesKilled, this.totalKills);
+        if (this.state === GameState.LOST) this.ui.drawLoseScreen(this.ctx, this.wave, this.bossesKilled, this.totalKills);
     }
 }

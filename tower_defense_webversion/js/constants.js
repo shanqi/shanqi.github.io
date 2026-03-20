@@ -18,6 +18,8 @@ export const HUD_HEIGHT = TOP_BAR_HEIGHT;
 export const GameState = {
     MAIN_MENU: 'MAIN_MENU',
     MAP_SELECT: 'MAP_SELECT',
+    WORKSHOP: 'WORKSHOP',
+    EDITOR: 'EDITOR',
     PREP: 'PREP',
     COMBAT: 'COMBAT',
     PAUSED: 'PAUSED',

@@ -203,8 +203,13 @@ export class Tower {
             return null;
         }
 
-        // Spawner ticking
+        // Spawner ticking — only when enemies are alive
         if (this.isSpawner) {
+            const aliveEnemies = enemies.filter(e => e.alive && !e.reachedExit);
+            if (aliveEnemies.length === 0) {
+                this.spawnTimer = 0; // reset so ducks don't burst-spawn
+                return null;
+            }
             this.spawnTimer += dt;
             if (this.spawnTimer >= this.spawnInterval) {
                 this.spawnTimer -= this.spawnInterval;
