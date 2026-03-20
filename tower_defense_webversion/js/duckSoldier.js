@@ -16,7 +16,7 @@ export class DuckSoldier {
         this.isMega = isMega;
         this.size = isMega ? 48 : 32;
         this.attackRange = 1.8;
-        this.attackRate = 1.0;
+        this.attackRate = 0.8;
         this.attackTimer = 0;
         this.lifetime = 20;
         this.lifeTimer = 0;

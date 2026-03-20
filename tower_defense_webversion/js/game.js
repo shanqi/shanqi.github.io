@@ -3,7 +3,7 @@
 import {
     GameState, TileType, TowerType, EnemyType,
     STARTING_GOLD, STARTING_LIVES, INTEREST_RATE, INTEREST_CAP,
-    SELL_REFUND_RATIO, PERFECT_WAVE_BONUS, MAX_GOLD_MINES, TOTAL_WAVES,
+    SELL_REFUND_RATIO, PERFECT_WAVE_BONUS, EARLY_START_BONUS, MAX_GOLD_MINES, TOTAL_WAVES,
     SYNERGIES, TILE_SIZE
 } from './constants.js';
 import { MAP_DATA } from './mapData.js';
@@ -358,6 +358,10 @@ export class Game {
         this.waveActive = true;
         this.perfectWave = true;
 
+        // Early start bonus
+        this.gold += EARLY_START_BONUS;
+        this.effects.addFloatingText(480, 330, `Early Start: +$${EARLY_START_BONUS}`, '#64ff64', 1.5);
+
         // Set up spawning
         const waveData = WAVE_DATA[this.wave - 1];
         this.subwaveIndex = 0;
@@ -431,6 +435,7 @@ export class Game {
 
         const enemy = new Enemy(type, this.wave, route, spawnIndex);
         this.enemies.push(enemy);
+        this.effects.addPortalParticles(enemy.pixelX, enemy.pixelY);
     }
 
     updateEnemies(dt) {
@@ -454,6 +459,7 @@ export class Game {
         for (const e of dead) {
             e._processed = true;
             this.gold += e.reward;
+            this.effects.registerKill(e.pixelX, e.pixelY);
             this.effects.addFloatingText(e.pixelX, e.pixelY, `+$${e.reward}`, '#ffd700');
 
             // Death particles
@@ -496,10 +502,12 @@ export class Game {
                     this.processKills(kills, tower);
                     tower.fireAnimTimer = 0.15;
                     this.effects.addScreenShake(0.12, 2);
+                    this.effects.addTowerFireEffect(tower.type, tower.pixelX, tower.pixelY);
                 } else {
                     // Create projectile
                     const proj = new Projectile(tower, result.target);
                     this.projectiles.push(proj);
+                    this.effects.addTowerFireEffect(tower.type, tower.pixelX, tower.pixelY);
                 }
             } else if (result.type === 'gold') {
                 this.gold += result.amount;
@@ -557,6 +565,8 @@ export class Game {
 
             if (result?.type === 'attack') {
                 result.target.takeDamage(result.damage);
+                // Duck attack slow
+                result.target.applySlow(0.5, 0.3);
                 this.effects.addFloatingText(
                     result.target.pixelX, result.target.pixelY - 15,
                     Math.round(result.damage).toString(), '#f0d23c'
@@ -565,6 +575,20 @@ export class Game {
 
             if (!duck.alive) {
                 this.ducks.splice(i, 1);
+            }
+        }
+
+        // Enemy counterattack: ground enemies near ducks deal damage
+        for (const duck of this.ducks) {
+            if (!duck.alive) continue;
+            for (const e of this.enemies) {
+                if (!e.alive || e.reachedExit || e.isFlying) continue;
+                const dx = e.x - duck.x;
+                const dy = e.y - duck.y;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+                if (dist <= 1.5) {
+                    duck.takeDamage(e.maxHP * 0.03 * dt);
+                }
             }
         }
     }
@@ -654,8 +678,8 @@ export class Game {
                 for (const t2 of this.towers) {
                     if (t1 === t2 || !synergy.towers.includes(t2.type)) continue;
                     if (t1.type === t2.type) continue;
-                    const dist = Math.sqrt((t1.gridX - t2.gridX) ** 2 + (t1.gridY - t2.gridY) ** 2);
-                    if (dist <= 2.0) {
+                    const dist = Math.max(Math.abs(t1.gridX - t2.gridX), Math.abs(t1.gridY - t2.gridY));
+                    if (dist <= 1) {
                         if (synergy.buff.damage) {
                             t1.synergyDamageBonus = Math.max(t1.synergyDamageBonus, synergy.buff.damage);
                             t2.synergyDamageBonus = Math.max(t2.synergyDamageBonus, synergy.buff.damage);
@@ -760,11 +784,20 @@ export class Game {
         // Ghost tower
         if (this.placingTowerType && this.input.isOnGrid) {
             const canPlace = this.canPlaceTower(this.input.gridX, this.input.gridY);
-            this.renderer.drawGhostTower(this.placingTowerType, this.input.gridX, this.input.gridY, canPlace);
+            const tdata = TOWER_DATA[this.placingTowerType];
+            let rangeTiles = tdata.range || 0;
+            // Account for high ground bonus
+            if (this.tiles[this.input.gridY]?.[this.input.gridX] === TileType.HIGH_GROUND) {
+                rangeTiles += 1.0;  // HIGH_GROUND_RANGE_BONUS
+            }
+            this.renderer.drawGhostTower(this.placingTowerType, this.input.gridX, this.input.gridY, canPlace, rangeTiles);
         }
 
         // Effects
         this.effects.draw(this.ctx);
+
+        // Day/night tint
+        this.renderer.drawDayNightTint(this.wave, 20);
 
         // UI
         const aliveEnemies = this.enemies.filter(e => e.alive && !e.reachedExit).length;

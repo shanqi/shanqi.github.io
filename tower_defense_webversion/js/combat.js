@@ -91,7 +91,6 @@ export function resolveProjectileHit(projectile, enemies, effects) {
     // Chain damage
     if (projectile.chainCount > 0) {
         let lastTarget = primary;
-        let chainDmgMult = CHAIN_DAMAGE_RATIO;
         const chained = new Set([primary.id]);
 
         for (let i = 0; i < projectile.chainCount; i++) {
@@ -109,7 +108,7 @@ export function resolveProjectileHit(projectile, enemies, effects) {
 
             chained.add(nearest.id);
             const chainDmg = calculateDamage(
-                dmg * chainDmgMult, projectile.damageType,
+                dmg * CHAIN_DAMAGE_RATIO, projectile.damageType,
                 nearest.armor, nearest.armorBroken, projectile.ignoreArmor
             );
             nearest.takeDamage(chainDmg);
@@ -124,7 +123,6 @@ export function resolveProjectileHit(projectile, enemies, effects) {
             effects.addLightning(lastTarget.pixelX, lastTarget.pixelY, nearest.pixelX, nearest.pixelY);
 
             lastTarget = nearest;
-            chainDmgMult *= CHAIN_DAMAGE_RATIO;
         }
     }
 

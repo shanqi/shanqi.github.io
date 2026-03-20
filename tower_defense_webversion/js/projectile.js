@@ -1,6 +1,6 @@
 // projectile.js — Projectile class
 
-import { TILE_SIZE, GRID_OFFSET_X, GRID_OFFSET_Y, TowerType } from './constants.js';
+import { TILE_SIZE, GRID_OFFSET_X, GRID_OFFSET_Y } from './constants.js';
 
 let nextProjectileId = 0;
 
@@ -33,8 +33,6 @@ export class Projectile {
         this.ignoreArmor = false;
 
         if (tower.specialization) {
-            const spec = tower.type === TowerType.CANNON && tower.specialization === 'B'
-                ? { armor_break: 3.0 } : {};
             // Pull from tower data specializations
             const towerData = window.__TOWER_DATA?.[tower.type];
             if (towerData?.specializations?.[tower.specialization]) {
@@ -83,7 +81,7 @@ export class Projectile {
         const dy = this.targetY - this.y;
         const dist = Math.sqrt(dx * dx + dy * dy);
 
-        if (dist < 0.3 || this.speed === 0) {
+        if (dist < 0.15 || this.speed === 0) {
             // Hit
             this.alive = false;
             return { hit: true, x: this.targetX, y: this.targetY };

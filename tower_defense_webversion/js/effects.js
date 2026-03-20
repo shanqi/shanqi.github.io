@@ -11,6 +11,13 @@ export class EffectSystem {
         this.announcements = [];
         this.screenShake = 0;
         this.shakeIntensity = 0;
+
+        // Combo kill system
+        this.comboCount = 0;
+        this.comboTimer = 0;
+        this.comboWindow = 0.8;
+        this.lastKillX = 0;
+        this.lastKillY = 0;
     }
 
     addParticle(x, y, color, vx = 0, vy = 0) {
@@ -21,7 +28,7 @@ export class EffectSystem {
             life: 1.0,
             maxLife: 1.0 + Math.random(),
             size: 2 + Math.random() * 3,
-            gravity: 40,
+            gravity: 60,
         });
     }
 
@@ -65,7 +72,78 @@ export class EffectSystem {
         this.shakeIntensity = Math.max(this.shakeIntensity, intensity);
     }
 
+    addTowerFireEffect(towerType, x, y) {
+        const effects = {
+            'cannon': { color: 'rgb(180,170,160)', count: 6, speed: 40, size: 3, life: 0.35 },
+            'flame': { color: 'rgb(255,140,40)', count: 4, speed: 30, size: 2.5, life: 0.25 },
+            'tesla': { color: 'rgb(100,200,255)', count: 3, speed: 25, size: 2, life: 0.2 },
+            'sniper': { color: 'rgb(255,255,200)', count: 1, speed: 0, size: 3, life: 0.12 },
+            'ice': { color: 'rgb(180,230,255)', count: 3, speed: 20, size: 1.5, life: 0.3 },
+            'mage': { color: 'rgb(200,140,255)', count: 3, speed: 20, size: 2, life: 0.25 },
+            'doom_spire': { color: 'rgb(180,80,255)', count: 8, speed: 50, size: 3, life: 0.35 },
+        };
+        const e = effects[towerType] || { color: 'rgb(255,255,200)', count: 1, speed: 0, size: 2, life: 0.1 };
+        for (let i = 0; i < e.count; i++) {
+            this.particles.push({
+                x, y, color: e.color,
+                vx: (Math.random() - 0.5) * e.speed * 2,
+                vy: (Math.random() - 0.5) * e.speed * 2 - 20,
+                life: 1.0, maxLife: e.life,
+                size: e.size + Math.random(), gravity: 30,
+            });
+        }
+    }
+
+    registerKill(x, y) {
+        if (this.comboTimer > 0) {
+            this.comboCount++;
+        } else {
+            this.comboCount = 1;
+        }
+        this.comboTimer = this.comboWindow;
+        this.lastKillX = x;
+        this.lastKillY = y;
+
+        if (this.comboCount >= 3) {
+            let label, color;
+            if (this.comboCount >= 8) { label = 'MEGA KILL!'; color = '#ff3300'; }
+            else if (this.comboCount >= 5) { label = `x${this.comboCount} FRENZY!`; color = '#ff6633'; }
+            else { label = `x${this.comboCount}!`; color = '#e6b800'; }
+            this.addFloatingText(x, y - 30, label, color, 1.2);
+            // Extra particles for big combos
+            if (this.comboCount >= 5) {
+                for (let i = 0; i < 6; i++) {
+                    this.addParticle(x, y, color);
+                }
+            }
+        }
+        return this.comboCount >= 3 ? this.comboCount : 0;
+    }
+
+    addPortalParticles(x, y) {
+        const colors = ['rgb(180,60,60)', 'rgb(120,40,40)', 'rgb(200,80,80)'];
+        for (let i = 0; i < 5; i++) {
+            const angle = Math.random() * Math.PI * 2;
+            const dist = 20 + Math.random() * 15;
+            this.particles.push({
+                x: x + Math.cos(angle) * dist,
+                y: y + Math.sin(angle) * dist,
+                color: colors[Math.floor(Math.random() * 3)],
+                vx: -Math.cos(angle) * 30,
+                vy: -Math.sin(angle) * 30,
+                life: 1.0, maxLife: 0.5,
+                size: 2 + Math.random(), gravity: 0,
+            });
+        }
+    }
+
     update(dt) {
+        // Combo timer decay
+        if (this.comboTimer > 0) {
+            this.comboTimer -= dt;
+            if (this.comboTimer <= 0) this.comboCount = 0;
+        }
+
         // Particles
         for (let i = this.particles.length - 1; i >= 0; i--) {
             const p = this.particles[i];

@@ -248,6 +248,14 @@ export class UI {
         const is4x = Math.abs(speedMult - 4) < 0.1;
         this._drawRoundBtn(ctx, { x: 240, y: btnY, w: 52, h: 34 }, '4x',
             is4x ? '#ff6633' : Colors.BG_LIGHT, is4x ? Colors.BLACK : Colors.TEXT, 6, 'bold 20px Arial');
+
+        // Wave info (right side)
+        if (gameState === GameState.COMBAT) {
+            ctx.fillStyle = Colors.TEXT_DARK; ctx.font = '14px Arial';
+            ctx.textAlign = 'right';
+            ctx.fillText('Wave in progress...', PANEL_X - 10, barY + 28);
+            ctx.textAlign = 'left';
+        }
     }
 
     // ─── Shop Panel ─────────────────────────────
@@ -515,6 +523,15 @@ export class UI {
                     ctx.fillStyle = 'rgb(160,80,80)'; ctx.font = '14px Arial';
                     ctx.fillText(`Need ${cost - gold}g more`, x, y + 12); y += 18;
                 }
+                // Upgrade preview
+                ctx.fillStyle = 'rgb(100,180,100)'; ctx.font = '14px Arial';
+                if (tower.type === TowerType.GOLD_MINE) {
+                    ctx.fillText('+income per level', x, y + 12); y += 18;
+                } else if (tower.type === TowerType.HARRY_DUCK) {
+                    ctx.fillText('+duck stats per level', x, y + 12); y += 18;
+                } else if (tower.baseDamage > 0) {
+                    ctx.fillText('+dmg, +range, faster', x, y + 12); y += 18;
+                }
             }
         } else {
             this._upgradeBtn = this._specABtn = this._specBBtn = null;
@@ -525,6 +542,11 @@ export class UI {
             ctx.fillStyle = '#9933ff'; ctx.font = '14px Arial'; ctx.textAlign = 'center';
             ctx.fillText('MAX LEVEL', x + w / 2, y + 16); ctx.textAlign = 'left';
             y += 28;
+        }
+
+        if (tower.level === 6) {
+            ctx.fillStyle = Colors.TEXT_DARK; ctx.font = '14px Arial';
+            ctx.fillText('Lv 8: Choose spec!', x, y + 12); y += 18;
         }
 
         y += 4;
@@ -681,6 +703,7 @@ export class UI {
 
         ctx.fillStyle = Colors.TEXT; ctx.font = '17px Arial';
         ctx.fillText(`Waves Completed: ${wave}`, cx, 320);
+        ctx.fillText(`Score: ${wave * 100}`, cx, 350);
 
         this._drawMenuButton(ctx, { x: cx - 140, y: 520, w: 280, h: 50 }, 'Continue', Colors.ACCENT, Colors.BLACK);
         ctx.textAlign = 'left';
@@ -696,6 +719,7 @@ export class UI {
 
         ctx.fillStyle = Colors.TEXT; ctx.font = '17px Arial';
         ctx.fillText(`Waves Completed: ${wave}`, cx, 320);
+        ctx.fillText(`Score: ${wave * 100}`, cx, 350);
 
         this._drawMenuButton(ctx, { x: cx - 140, y: 520, w: 280, h: 50 }, 'Continue', Colors.ACCENT, Colors.BLACK);
         ctx.textAlign = 'left';

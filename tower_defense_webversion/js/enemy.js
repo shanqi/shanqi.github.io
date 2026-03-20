@@ -1,6 +1,6 @@
 // enemy.js — Enemy class
 
-import { TILE_SIZE, GRID_OFFSET_X, GRID_OFFSET_Y, EnemyType } from './constants.js';
+import { TILE_SIZE, GRID_OFFSET_X, GRID_OFFSET_Y, EnemyType, ArmorType } from './constants.js';
 import { ENEMY_DATA, scaleEnemyHP, scaleEnemySpeed, scaleEnemyReward } from './enemyData.js';
 
 let nextEnemyId = 0;
@@ -90,8 +90,8 @@ export class Enemy {
 
         // Animation
         this.animTimer += dt;
-        if (this.animTimer >= 0.2) {
-            this.animTimer -= 0.2;
+        if (this.animTimer >= 0.12) {
+            this.animTimer -= 0.12;
             this.animFrame = (this.animFrame + 1) % 8;
         }
 
@@ -180,6 +180,7 @@ export class Enemy {
 
     applySlow(strength, duration) {
         if (this.ability === 'debuff_immune') return;
+        if (this.armor === ArmorType.ETHEREAL) return;
         if (strength > this.slowStrength || this.slowTimer <= 0) {
             this.slowStrength = strength;
         }
@@ -200,6 +201,7 @@ export class Enemy {
 
     applyArmorBreak(duration) {
         if (this.ability === 'debuff_immune') return;
+        if (this.armor === ArmorType.ETHEREAL) return;
         this.armorBroken = true;
         this.armorBreakTimer = Math.max(this.armorBreakTimer, duration);
     }
