@@ -871,6 +871,7 @@ export class Game {
 
     checkWaveComplete() {
         if (!this.waveActive) return;
+        if (this.state === GameState.LOST) return; // Don't override game over
 
         const waveData = WAVE_DATA[this.wave - 1];
         const allSpawned = this.subwaveIndex >= waveData.subwaves.length && this.spawnQueue.length === 0;
