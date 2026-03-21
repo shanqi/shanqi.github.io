@@ -127,7 +127,7 @@ export const TOWER_DATA = {
         damage: 30,
         damage_type: DamageType.KINETIC,
         range: 5.0,
-        fire_rate: 0.8,
+        fire_rate: 0.4,
         splash_radius: 0,
         target_mode: TargetMode.AIR_ONLY,
         can_hit_air: true,
