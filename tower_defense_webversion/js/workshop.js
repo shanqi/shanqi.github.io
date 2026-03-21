@@ -30,6 +30,8 @@ export class Workshop {
     draw(ctx, saveData) {
         this.buttons = [];
 
+        ctx.save(); // Protect canvas state
+
         // Background
         ctx.fillStyle = Colors.BG;
         ctx.fillRect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
@@ -231,6 +233,8 @@ export class Workshop {
         ctx.textBaseline = 'top';
 
         this.buttons.push({ x: backX, y: backY, w: backW, h: backH, category: 'back', key: null });
+
+        ctx.restore(); // Restore canvas state (textBaseline, textAlign, etc.)
     }
 
     /**

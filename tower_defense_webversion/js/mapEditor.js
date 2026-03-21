@@ -111,6 +111,8 @@ export class MapEditor {
     }
 
     draw(ctx, mouseX, mouseY) {
+        ctx.save(); // Protect canvas state
+
         // --- Top bar ---
         ctx.fillStyle = Colors.BG;
         ctx.fillRect(0, 0, SCREEN_WIDTH, TOP_BAR_HEIGHT);
@@ -327,6 +329,8 @@ export class MapEditor {
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillText('Back (Esc)', bb.x + bb.w / 2, bb.y + bb.h / 2);
+
+        ctx.restore(); // Restore canvas state
     }
 
     handleMouseDown(mx, my, button) {
