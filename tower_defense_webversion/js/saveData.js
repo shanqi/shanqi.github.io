@@ -47,7 +47,7 @@ export const TOWER_MASTERY = {
     flame:      { name: 'Flame Mastery',      desc: '+10% burn dmg/level',   max: 4, costs: [120, 250, 450, 750] },
     tesla:      { name: 'Tesla Mastery',      desc: '+1 chain target/level', max: 4, costs: [150, 300, 500, 800] },
     sniper:     { name: 'Sniper Mastery',     desc: '+8% damage/level',      max: 4, costs: [150, 300, 500, 800] },
-    harry_duck: { name: 'Harry Duck Mastery', desc: '+15% duck HP/level',    max: 4, costs: [200, 350, 550, 850] },
+    harry_duck: { name: "Harry's Farm Mastery", desc: '+15% duck HP/level',    max: 4, costs: [200, 350, 550, 850] },
     aura:       { name: 'Aura Mastery',       desc: '+0.5 buff radius/level',max: 4, costs: [200, 350, 550, 850] },
     gold_mine:  { name: 'Gold Mine Mastery',  desc: '+1g/tick/level',        max: 4, costs: [100, 200, 400, 700] },
 };

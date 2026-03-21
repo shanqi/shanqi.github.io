@@ -243,7 +243,7 @@ export const TOWER_DATA = {
     },
 
     [TowerType.HARRY_DUCK]: {
-        name: "Harry Duck",
+        name: "Harry's Duck Farm",
         cost: 120,
         damage: 0,
         damage_type: null,

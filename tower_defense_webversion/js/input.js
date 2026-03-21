@@ -31,8 +31,9 @@ export class InputManager {
 
     onMouseMove(e) {
         const rect = this.canvas.getBoundingClientRect();
-        const scaleX = this.canvas.width / rect.width;
-        const scaleY = this.canvas.height / rect.height;
+        // Map to logical coordinates (SCREEN_WIDTH x SCREEN_HEIGHT), not canvas pixels
+        const scaleX = SCREEN_WIDTH / rect.width;
+        const scaleY = SCREEN_HEIGHT / rect.height;
         this.mouseX = (e.clientX - rect.left) * scaleX;
         this.mouseY = (e.clientY - rect.top) * scaleY;
 
