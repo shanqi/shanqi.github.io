@@ -77,6 +77,8 @@ export class Bestiary {
     }
 
     draw(ctx, saveData) {
+        ctx.save(); // Protect canvas state
+
         // Clear background
         ctx.fillStyle = Colors.BG;
         ctx.fillRect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
@@ -97,12 +99,11 @@ export class Bestiary {
         ctx.font = `14px ${FONT}`;
         ctx.fillText(`${discoveredCount} / ${ENEMY_ORDER.length} Discovered`, SCREEN_WIDTH / 2, 52);
 
-        // Enemy entries
-        const marginX = 20;
-        const cardWidth = SCREEN_WIDTH - marginX * 2;
-        const cardHeight = 65;
-        const cardGap = 6;
-        const startY = 78;
+        // Enemy entries — 2 columns, 5 rows
+        const colW = (SCREEN_WIDTH - 50) / 2;
+        const cardHeight = 62;
+        const cardGap = 5;
+        const startY = 74;
 
         ctx.textAlign = 'left';
         ctx.textBaseline = 'top';
@@ -112,8 +113,10 @@ export class Bestiary {
             const data = ENEMY_DATA[type];
             const info = BESTIARY_INFO[type];
             const isDiscovered = !!discovered[type];
-            const cardX = marginX;
-            const cardY = startY + i * (cardHeight + cardGap);
+            const col = i < 5 ? 0 : 1;
+            const row = i < 5 ? i : i - 5;
+            const cardX = 20 + col * (colW + 10);
+            const cardY = startY + row * (cardHeight + cardGap);
 
             // Card background
             if (isDiscovered) {
@@ -122,20 +125,20 @@ export class Bestiary {
                 ctx.fillStyle = '#1f1f30';
             }
             ctx.beginPath();
-            this._roundRect(ctx, cardX, cardY, cardWidth, cardHeight, 6);
+            this._roundRect(ctx, cardX, cardY, colW, cardHeight, 6);
             ctx.fill();
 
             // Card border
             ctx.strokeStyle = isDiscovered ? Colors.PANEL_BORDER : '#2a2a40';
             ctx.lineWidth = 1;
             ctx.beginPath();
-            this._roundRect(ctx, cardX, cardY, cardWidth, cardHeight, 6);
+            this._roundRect(ctx, cardX, cardY, colW, cardHeight, 6);
             ctx.stroke();
 
             if (isDiscovered) {
-                this._drawDiscoveredCard(ctx, cardX, cardY, cardWidth, cardHeight, type, data, info);
+                this._drawDiscoveredCard(ctx, cardX, cardY, colW, cardHeight, type, data, info);
             } else {
-                this._drawLockedCard(ctx, cardX, cardY, cardWidth, cardHeight);
+                this._drawLockedCard(ctx, cardX, cardY, colW, cardHeight);
             }
         }
 
@@ -158,6 +161,8 @@ export class Bestiary {
 
         // Store button for click detection
         this.buttons = [{ id: 'back', x: btnX, y: btnY, w: btnW, h: btnH }];
+
+        ctx.restore(); // Restore canvas state
     }
 
     _drawDiscoveredCard(ctx, cardX, cardY, cardWidth, cardHeight, type, data, info) {
