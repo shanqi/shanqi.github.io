@@ -24,6 +24,7 @@ import { loadSaveData, saveSaveData, calculateEssence } from './saveData.js';
 import { Workshop } from './workshop.js';
 import { MapEditor } from './mapEditor.js';
 import { Bestiary } from './bestiary.js';
+import { CompanionDuck } from './companionDuck.js';
 
 export class Game {
     constructor(canvas) {
@@ -43,6 +44,7 @@ export class Game {
         this.saveData = loadSaveData();
         this.workshop = new Workshop();
         this.bestiary = new Bestiary();
+        this.companionDuck = null;
         this.mapEditor = null;
 
         // Game data (initialized on map load)
@@ -109,6 +111,13 @@ export class Game {
         this.totalKills = 0;
         this.essenceEarned = 0;
         this.effects = new EffectSystem();
+        this.companionDuck = new CompanionDuck();
+
+        // Position duck near spawn
+        if (this.spawns.length > 0) {
+            this.companionDuck.x = this.spawns[0][0] + 2;
+            this.companionDuck.y = this.spawns[0][1];
+        }
 
         this.state = GameState.PREP;
     }
@@ -175,6 +184,11 @@ export class Game {
         this.updateSynergies();
         this.effects.update(gameDt);
         this.renderer.advance(gameDt);
+
+        // Update companion duck
+        if (this.companionDuck) {
+            this.companionDuck.update(gameDt, this.towers, this.state, this.wave);
+        }
     }
 
     handleMenuInput() {
@@ -497,6 +511,9 @@ export class Game {
 
         if (type === TowerType.GOLD_MINE) this.goldMineCount++;
 
+        // Notify companion duck
+        if (this.companionDuck) this.companionDuck.onTowerPlaced(tower);
+
         // Track for undo grace period (max 3 recent placements)
         tower._undoGracePeriod = 3.0;
         this.recentPlacements.push({
@@ -523,6 +540,7 @@ export class Game {
         if (this.gold < cost) return;
         this.gold -= cost;
         this.selectedTower.upgrade();
+        if (this.companionDuck) this.companionDuck.onTowerUpgraded(this.selectedTower);
     }
 
     specializeTower(choice) {
@@ -1076,6 +1094,11 @@ export class Game {
         this.renderer.drawTowers(this.towers);
         this.renderer.drawEnemies(this.enemies);
         this.renderer.drawDucks(this.ducks);
+
+        // Companion duck (Harry)
+        if (this.companionDuck) {
+            this.companionDuck.draw(this.ctx);
+        }
         this.renderer.drawProjectiles(this.projectiles);
 
         // Ghost tower
