@@ -72,10 +72,12 @@ export class UI {
         // Start Wave: Rect(12, barY+8, 160, 34)
         if (mx >= 12 && mx <= 172 && my >= barY + 8 && my <= barY + 42)
             return (gameState === GameState.PREP) ? 'start_wave' : null;
-        // 2x: Rect(182, barY+8, 52, 34)
-        if (mx >= 182 && mx <= 234 && my >= barY + 8 && my <= barY + 42) return 'speed_2x';
-        // 4x: Rect(240, barY+8, 52, 34)
-        if (mx >= 240 && mx <= 292 && my >= barY + 8 && my <= barY + 42) return 'speed_4x';
+        // 1x: Rect(182, barY+8, 42, 34)
+        if (mx >= 182 && mx <= 224 && my >= barY + 8 && my <= barY + 42) return 'speed_1x';
+        // 2x: Rect(228, barY+8, 42, 34)
+        if (mx >= 228 && mx <= 270 && my >= barY + 8 && my <= barY + 42) return 'speed_2x';
+        // 4x: Rect(274, barY+8, 42, 34)
+        if (mx >= 274 && mx <= 316 && my >= barY + 8 && my <= barY + 42) return 'speed_4x';
         // Pause: Rect(PANEL_X-50, 8, 42, 34)  — it's in the TOP bar
         if (mx >= PANEL_X - 50 && mx <= PANEL_X - 8 && my >= 8 && my <= 42) return 'pause';
         return null;
@@ -248,15 +250,20 @@ export class UI {
         const startColor = isPrep ? Colors.BLACK : Colors.TEXT_DIM;
         this._drawRoundBtn(ctx, startRect, startText, startBg, startColor, 6, F(17));
 
+        // 1x speed (normal)
+        const is1x = Math.abs(speedMult - 1) < 0.1;
+        this._drawRoundBtn(ctx, { x: 182, y: btnY, w: 42, h: 34 }, '1x',
+            is1x ? Colors.ACCENT : Colors.BG_LIGHT, is1x ? Colors.BLACK : Colors.TEXT, 6, F(17, 'bold'));
+
         // 2x speed
         const is2x = Math.abs(speedMult - 2) < 0.1;
-        this._drawRoundBtn(ctx, { x: 182, y: btnY, w: 52, h: 34 }, '2x',
-            is2x ? Colors.ACCENT : Colors.BG_LIGHT, is2x ? Colors.BLACK : Colors.TEXT, 6, F(20, 'bold'));
+        this._drawRoundBtn(ctx, { x: 228, y: btnY, w: 42, h: 34 }, '2x',
+            is2x ? Colors.ACCENT : Colors.BG_LIGHT, is2x ? Colors.BLACK : Colors.TEXT, 6, F(17, 'bold'));
 
         // 4x speed
         const is4x = Math.abs(speedMult - 4) < 0.1;
-        this._drawRoundBtn(ctx, { x: 240, y: btnY, w: 52, h: 34 }, '4x',
-            is4x ? '#ff6633' : Colors.BG_LIGHT, is4x ? Colors.BLACK : Colors.TEXT, 6, F(20, 'bold'));
+        this._drawRoundBtn(ctx, { x: 274, y: btnY, w: 42, h: 34 }, '4x',
+            is4x ? '#ff6633' : Colors.BG_LIGHT, is4x ? Colors.BLACK : Colors.TEXT, 6, F(17, 'bold'));
 
         // Next wave preview (during PREP)
         if (nextWaveInfo && isPrep) {
@@ -498,9 +505,11 @@ export class UI {
             ctx.fillText(`Range: ${tower.range.toFixed(1)}`, x, y + 14); y += lh;
         } else if (tower.type === TowerType.GOLD_MINE) {
             ctx.fillStyle = Colors.GOLD;
-            ctx.fillText(`Income: ${tower.goldPerTick}g / ${tower.tickInterval}s`, x, y + 14); y += lh;
+            const gpt = tower.currentGoldPerTick;
+            const interval = tower.currentTickInterval;
+            ctx.fillText(`Income: ${gpt}g / ${interval.toFixed(1)}s`, x, y + 14); y += lh;
             ctx.fillStyle = Colors.TEXT_DIM;
-            ctx.fillText(`(${(tower.goldPerTick * 60 / tower.tickInterval).toFixed(0)}g/min)`, x, y + 14); y += lh;
+            ctx.fillText(`(${(gpt * 60 / interval).toFixed(0)}g/min)`, x, y + 14); y += lh;
         }
 
         if (tower.isHighGround) {
@@ -588,7 +597,12 @@ export class UI {
                 // Upgrade preview
                 ctx.fillStyle = 'rgb(100,180,100)'; ctx.font = F(14);
                 if (tower.type === TowerType.GOLD_MINE) {
-                    ctx.fillText('+income per level', x, y + 12); y += 18;
+                    const curG = tower.currentGoldPerTick;
+                    const curI = tower.currentTickInterval;
+                    const nxtG = Math.floor((tower.goldPerTick + tower.level * 0.5) * 10) / 10;
+                    const nxtI = Math.max(tower.tickInterval - tower.level * 0.15, 2.5);
+                    ctx.fillText(`${curG}g -> ${nxtG}g per tick`, x, y + 12); y += 18;
+                    ctx.fillText(`${curI.toFixed(1)}s -> ${nxtI.toFixed(1)}s interval`, x, y + 12); y += 18;
                 } else if (tower.type === TowerType.HARRY_DUCK) {
                     ctx.fillText('+duck stats per level', x, y + 12); y += 18;
                 } else if (tower.baseDamage > 0) {
@@ -677,7 +691,7 @@ export class UI {
         ctx.fillStyle = Colors.ACCENT; ctx.font = F(28, 'bold');
         ctx.fillText('Harry the Duck', cx, 257);
         ctx.fillStyle = Colors.TEXT_DARK; ctx.font = F(14);
-        ctx.fillText('March 2026  |  v0.2.10', cx, 280);
+        ctx.fillText('March 2026  |  v0.2.12', cx, 280);
 
         // Separator
         ctx.strokeStyle = Colors.PANEL_BORDER;

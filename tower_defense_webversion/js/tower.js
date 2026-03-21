@@ -125,6 +125,20 @@ export class Tower {
         return rate;
     }
 
+    // Gold mine level-scaled values
+    get currentGoldPerTick() {
+        let gpt = this.goldPerTick + (this.level - 1) * 0.5;
+        if (this.specialization === 'A') {
+            const spec = TOWER_DATA[this.type]?.specializations?.A;
+            if (spec?.gold_per_tick) gpt = spec.gold_per_tick;
+        }
+        return Math.floor(gpt * 10) / 10; // round to 1 decimal
+    }
+
+    get currentTickInterval() {
+        return Math.max(this.tickInterval - (this.level - 1) * 0.15, 2.5);
+    }
+
     get upgradeCost() {
         const data = TOWER_DATA[this.type];
         if (this.level > 7) return null;
@@ -195,10 +209,12 @@ export class Tower {
 
         // Economy ticking
         if (this.isEconomy) {
+            const interval = this.currentTickInterval;
+            const gold = this.currentGoldPerTick;
             this.tickTimer += dt;
-            if (this.tickTimer >= this.tickInterval) {
-                this.tickTimer -= this.tickInterval;
-                return { type: 'gold', amount: this.goldPerTick };
+            if (this.tickTimer >= interval) {
+                this.tickTimer -= interval;
+                return { type: 'gold', amount: Math.floor(gold) };
             }
             return null;
         }

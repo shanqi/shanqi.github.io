@@ -322,8 +322,10 @@ export class Game {
         }
 
         if (this.input.consumeKey(' ')) {
-            if (this.state === GameState.PREP) this.startWave();
-            else if (this.state === GameState.COMBAT) this.state = GameState.PAUSED;
+            if (this.state === GameState.COMBAT) {
+                this._prevState = this.state;
+                this.state = GameState.PAUSED;
+            }
         }
 
         if (this.input.consumeKey('f')) {
@@ -357,10 +359,12 @@ export class Game {
             const bottomBtn = this.ui.getBottomButtonAt(mx, my, this.state);
             if (bottomBtn === 'start_wave' && this.state === GameState.PREP) {
                 this.startWave();
+            } else if (bottomBtn === 'speed_1x') {
+                this.speedMultiplier = 1;
             } else if (bottomBtn === 'speed_2x') {
-                this.speedMultiplier = this.speedMultiplier === 2 ? 1 : 2;
+                this.speedMultiplier = 2;
             } else if (bottomBtn === 'speed_4x') {
-                this.speedMultiplier = this.speedMultiplier === 4 ? 1 : 4;
+                this.speedMultiplier = 4;
             } else if (bottomBtn === 'pause') {
                 if (this.state === GameState.COMBAT || this.state === GameState.PREP) {
                     this._prevState = this.state;
