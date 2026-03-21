@@ -3,7 +3,7 @@
 import {
     TILE_SIZE, GRID_WIDTH, GRID_HEIGHT, GRID_OFFSET_X, GRID_OFFSET_Y,
     SCREEN_WIDTH, SCREEN_HEIGHT, PANEL_WIDTH, HUD_HEIGHT, BOTTOM_BAR_HEIGHT,
-    TileType, Colors, TowerColors
+    TileType, Colors, TowerColors, FONT
 } from './constants.js';
 import { getTileSprite, getTowerSprite, getEnemySprite, getDuckSprite } from './sprites.js';
 
@@ -220,13 +220,13 @@ export class Renderer {
             const iconY = e.pixelY + e.size / 2 + 2;
             if (e.slowStrength > 0 && e.slowTimer > 0) {
                 ctx.fillStyle = Colors.FROST;
-                ctx.font = '8px Arial';
+                ctx.font = `8px ${FONT}`;
                 ctx.fillText('~', iconX, iconY + 8);
                 iconX += 8;
             }
             if (e.burnDPS > 0 && e.burnTimer > 0) {
                 ctx.fillStyle = Colors.FIRE;
-                ctx.font = '8px Arial';
+                ctx.font = `8px ${FONT}`;
                 ctx.fillText('^', iconX, iconY + 8);
             }
         }

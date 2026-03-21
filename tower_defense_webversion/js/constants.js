@@ -1,5 +1,9 @@
 // constants.js — All game constants, enums, and colors
 
+// Fonts — modern system font stack for crisp rendering
+export const FONT = "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, sans-serif";
+export const FONT_MONO = "'SF Mono', 'Cascadia Code', 'Consolas', 'Menlo', monospace";
+
 export const TILE_SIZE = 32;
 export const GRID_WIDTH = 30;
 export const GRID_HEIGHT = 20;

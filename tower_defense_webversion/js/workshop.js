@@ -1,5 +1,5 @@
 // workshop.js — Workshop (meta-progression) screen
-import { SCREEN_WIDTH, SCREEN_HEIGHT, Colors } from './constants.js';
+import { SCREEN_WIDTH, SCREEN_HEIGHT, Colors, FONT } from './constants.js';
 import { WORKSHOP_UPGRADES, TOWER_UNLOCKS, TOWER_MASTERY, saveSaveData } from './saveData.js';
 
 function roundRect(ctx, x, y, w, h, r) {
@@ -38,14 +38,14 @@ export class Workshop {
 
         // Title
         ctx.fillStyle = Colors.ACCENT;
-        ctx.font = 'bold 28px Arial, sans-serif';
+        ctx.font = `bold 28px ${FONT}`;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'top';
         ctx.fillText('THE WORKSHOP', SCREEN_WIDTH / 2, 18);
 
         // Essence display
         ctx.fillStyle = '#9933ff';
-        ctx.font = 'bold 22px Arial, sans-serif';
+        ctx.font = `bold 22px ${FONT}`;
         ctx.fillText(`Essence: ${saveData.essence}`, SCREEN_WIDTH / 2, 54);
 
         // Reset text alignment for buttons
@@ -58,7 +58,7 @@ export class Workshop {
         let leftY = 95;
 
         ctx.fillStyle = Colors.TEXT_DIM;
-        ctx.font = '14px Arial, sans-serif';
+        ctx.font = `14px ${FONT}`;
         ctx.fillText('GLOBAL UPGRADES', leftX, leftY);
         leftY += 22;
 
@@ -81,12 +81,12 @@ export class Workshop {
 
             // Name
             ctx.fillStyle = Colors.TEXT;
-            ctx.font = '17px Arial, sans-serif';
+            ctx.font = `17px ${FONT}`;
             ctx.fillText(upg.name, leftX + 10, leftY + 5);
 
             // Description
             ctx.fillStyle = Colors.TEXT_DIM;
-            ctx.font = '14px Arial, sans-serif';
+            ctx.font = `14px ${FONT}`;
             ctx.fillText(upg.desc, leftX + 10, leftY + 24);
 
             // Level pips on the right
@@ -96,11 +96,11 @@ export class Workshop {
             ctx.textAlign = 'right';
             if (maxed) {
                 ctx.fillStyle = Colors.SUCCESS;
-                ctx.font = '14px Arial, sans-serif';
+                ctx.font = `14px ${FONT}`;
                 ctx.fillText('MAX', leftX + leftW - 10, leftY + 14);
             } else {
                 ctx.fillStyle = affordable ? '#9933ff' : Colors.TEXT_DARK;
-                ctx.font = '14px Arial, sans-serif';
+                ctx.font = `14px ${FONT}`;
                 ctx.fillText(`${cost}`, leftX + leftW - 10, leftY + 14);
             }
             ctx.textAlign = 'left';
@@ -116,7 +116,7 @@ export class Workshop {
         let rightY = 95;
 
         ctx.fillStyle = Colors.TEXT_DIM;
-        ctx.font = '14px Arial, sans-serif';
+        ctx.font = `14px ${FONT}`;
         ctx.fillText('TOWER UNLOCKS', rightX, rightY);
         rightY += 22;
 
@@ -137,23 +137,23 @@ export class Workshop {
 
             // Name
             ctx.fillStyle = Colors.TEXT;
-            ctx.font = '17px Arial, sans-serif';
+            ctx.font = `17px ${FONT}`;
             ctx.fillText(unlock.name, rightX + 10, rightY + 5);
 
             // Description
             ctx.fillStyle = Colors.TEXT_DIM;
-            ctx.font = '14px Arial, sans-serif';
+            ctx.font = `14px ${FONT}`;
             ctx.fillText(unlock.desc, rightX + 10, rightY + 24);
 
             // Status
             ctx.textAlign = 'right';
             if (unlocked) {
                 ctx.fillStyle = Colors.SUCCESS;
-                ctx.font = '14px Arial, sans-serif';
+                ctx.font = `14px ${FONT}`;
                 ctx.fillText('UNLOCKED', rightX + rightW - 10, rightY + 14);
             } else {
                 ctx.fillStyle = affordable ? '#9933ff' : Colors.TEXT_DARK;
-                ctx.font = '14px Arial, sans-serif';
+                ctx.font = `14px ${FONT}`;
                 ctx.fillText(`${unlock.cost}`, rightX + rightW - 10, rightY + 14);
             }
             ctx.textAlign = 'left';
@@ -167,7 +167,7 @@ export class Workshop {
         rightY += 8;
 
         ctx.fillStyle = Colors.TEXT_DIM;
-        ctx.font = '14px Arial, sans-serif';
+        ctx.font = `14px ${FONT}`;
         ctx.fillText('TOWER MASTERY', rightX, rightY);
         rightY += 22;
 
@@ -190,7 +190,7 @@ export class Workshop {
 
             // Name
             ctx.fillStyle = Colors.TEXT;
-            ctx.font = '17px Arial, sans-serif';
+            ctx.font = `17px ${FONT}`;
             ctx.fillText(mast.name, rightX + 10, rightY + 5);
 
             // Pips at x + 170
@@ -200,11 +200,11 @@ export class Workshop {
             ctx.textAlign = 'right';
             if (maxed) {
                 ctx.fillStyle = Colors.SUCCESS;
-                ctx.font = '14px Arial, sans-serif';
+                ctx.font = `14px ${FONT}`;
                 ctx.fillText('MAX', rightX + rightW - 10, rightY + 12);
             } else {
                 ctx.fillStyle = affordable ? '#9933ff' : Colors.TEXT_DARK;
-                ctx.font = '14px Arial, sans-serif';
+                ctx.font = `14px ${FONT}`;
                 ctx.fillText(`${cost}`, rightX + rightW - 10, rightY + 12);
             }
             ctx.textAlign = 'left';
@@ -225,7 +225,7 @@ export class Workshop {
         ctx.fill();
 
         ctx.fillStyle = Colors.BLACK;
-        ctx.font = 'bold 20px Arial, sans-serif';
+        ctx.font = `bold 20px ${FONT}`;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillText('BACK', backX + backW / 2, backY + backH / 2);

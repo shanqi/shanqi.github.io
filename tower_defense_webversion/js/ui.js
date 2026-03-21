@@ -4,7 +4,8 @@ import {
     SCREEN_WIDTH, SCREEN_HEIGHT, TILE_SIZE,
     GRID_WIDTH, GRID_HEIGHT, GRID_OFFSET_X, GRID_OFFSET_Y,
     PANEL_WIDTH, TOP_BAR_HEIGHT, BOTTOM_BAR_HEIGHT,
-    TowerType, GameState, Colors, TowerColors, TOTAL_WAVES, SELL_REFUND_RATIO
+    TowerType, GameState, Colors, TowerColors, TOTAL_WAVES, SELL_REFUND_RATIO,
+    FONT, FONT_MONO
 } from './constants.js';
 import { TOWER_DATA, TOWER_ORDER } from './towerData.js';
 import { getTowerSprite } from './sprites.js';
@@ -29,6 +30,10 @@ function roundRect(ctx, x, y, w, h, r) {
     ctx.quadraticCurveTo(x, y, x + r, y);
     ctx.closePath();
 }
+
+// Font helpers — build canvas font strings from modern font stack
+const F = (size, weight = '') => `${weight} ${size}px ${FONT}`.trim();
+const FM = (size, weight = '') => `${weight} ${size}px ${FONT_MONO}`.trim();
 
 export class UI {
     constructor() {
@@ -153,12 +158,12 @@ export class UI {
         ctx.beginPath(); ctx.arc(18, cy + 11, 6, 0, Math.PI * 2); ctx.fill();
         ctx.strokeStyle = '#c8aa00'; ctx.lineWidth = 1;
         ctx.beginPath(); ctx.arc(18, cy + 11, 6, 0, Math.PI * 2); ctx.stroke();
-        ctx.fillStyle = '#a08200'; ctx.font = '12px Arial';
+        ctx.fillStyle = '#a08200'; ctx.font = F(12);
         ctx.textAlign = 'center'; ctx.fillText('$', 18, cy + 15); ctx.textAlign = 'left';
         // Label + value
-        ctx.fillStyle = Colors.TEXT_DARK; ctx.font = '14px Arial';
+        ctx.fillStyle = Colors.TEXT_DARK; ctx.font = F(14);
         ctx.fillText('GOLD', 28, cy + 6);
-        ctx.fillStyle = Colors.GOLD; ctx.font = 'bold 22px monospace';
+        ctx.fillStyle = Colors.GOLD; ctx.font = FM(22, 'bold');
         ctx.fillText(String(Math.floor(gold)), 28 + ctx.measureText('GOLD').width + 6, cy + 18);
 
         // ── Lives icon (heart shape) ──
@@ -170,10 +175,10 @@ export class UI {
         ctx.beginPath();
         ctx.moveTo(lx, hy - 1); ctx.lineTo(lx + 6, hy + 5); ctx.lineTo(lx + 12, hy - 1);
         ctx.closePath(); ctx.fill();
-        ctx.fillStyle = Colors.TEXT_DARK; ctx.font = '14px Arial';
+        ctx.fillStyle = Colors.TEXT_DARK; ctx.font = F(14);
         ctx.fillText('LIVES', lx + 16, cy + 6);
         const livesColor = lives > 10 ? Colors.HP_GREEN : lives > 5 ? Colors.HP_YELLOW : Colors.HP_RED;
-        ctx.fillStyle = livesColor; ctx.font = 'bold 22px monospace';
+        ctx.fillStyle = livesColor; ctx.font = FM(22, 'bold');
         ctx.fillText(String(lives), lx + 16 + ctx.measureText('LIVES').width + 6, cy + 18);
 
         // ── Wave icon (blue flag) ──
@@ -185,9 +190,9 @@ export class UI {
         ctx.beginPath();
         ctx.moveTo(wx + 5, fy - 7); ctx.lineTo(wx + 14, fy - 4); ctx.lineTo(wx + 5, fy - 1);
         ctx.closePath(); ctx.fill();
-        ctx.fillStyle = Colors.TEXT_DARK; ctx.font = '14px Arial';
+        ctx.fillStyle = Colors.TEXT_DARK; ctx.font = F(14);
         ctx.fillText('WAVE', wx + 18, cy + 6);
-        ctx.fillStyle = Colors.TEXT; ctx.font = 'bold 22px monospace';
+        ctx.fillStyle = Colors.TEXT; ctx.font = FM(22, 'bold');
         ctx.fillText(`${wave}/${TOTAL_WAVES}`, wx + 18 + ctx.measureText('WAVE').width + 6, cy + 18);
 
         // ── Enemies icon (skull) ──
@@ -199,20 +204,20 @@ export class UI {
         ctx.fillStyle = Colors.BG;
         ctx.beginPath(); ctx.arc(ex + 4, sy - 1, 1.2, 0, Math.PI * 2); ctx.fill();
         ctx.beginPath(); ctx.arc(ex + 8, sy - 1, 1.2, 0, Math.PI * 2); ctx.fill();
-        ctx.fillStyle = Colors.TEXT_DARK; ctx.font = '14px Arial';
+        ctx.fillStyle = Colors.TEXT_DARK; ctx.font = F(14);
         ctx.fillText('ENEMIES', ex + 16, cy + 6);
-        ctx.fillStyle = Colors.TEXT; ctx.font = 'bold 22px monospace';
+        ctx.fillStyle = Colors.TEXT; ctx.font = FM(22, 'bold');
         ctx.fillText(String(enemyCount), ex + 16 + ctx.measureText('ENEMIES').width + 6, cy + 18);
 
         // ── Speed indicator ──
         if (speedMult > 1) {
-            ctx.fillStyle = Colors.ACCENT; ctx.font = 'bold 28px Arial';
+            ctx.fillStyle = Colors.ACCENT; ctx.font = F(28, 'bold');
             ctx.fillText(`${speedMult}x`, 660, cy + 18);
         }
 
         // ── Pause button (in top bar) ──
         const pauseRect = { x: PANEL_X - 50, y: 8, w: 42, h: 34 };
-        this._drawRoundBtn(ctx, pauseRect, '| |', Colors.BG_LIGHT, Colors.TEXT, 6, 'bold 20px Arial');
+        this._drawRoundBtn(ctx, pauseRect, '| |', Colors.BG_LIGHT, Colors.TEXT, 6, F(20, 'bold'));
     }
 
     // ─── Bottom Bar ─────────────────────────────
@@ -241,21 +246,21 @@ export class UI {
         const startBg = isPrep ? Colors.ACCENT : Colors.BG_LIGHT;
         const startText = isPrep ? 'START WAVE' : 'Spawning...';
         const startColor = isPrep ? Colors.BLACK : Colors.TEXT_DIM;
-        this._drawRoundBtn(ctx, startRect, startText, startBg, startColor, 6, '17px Arial');
+        this._drawRoundBtn(ctx, startRect, startText, startBg, startColor, 6, F(17));
 
         // 2x speed
         const is2x = Math.abs(speedMult - 2) < 0.1;
         this._drawRoundBtn(ctx, { x: 182, y: btnY, w: 52, h: 34 }, '2x',
-            is2x ? Colors.ACCENT : Colors.BG_LIGHT, is2x ? Colors.BLACK : Colors.TEXT, 6, 'bold 20px Arial');
+            is2x ? Colors.ACCENT : Colors.BG_LIGHT, is2x ? Colors.BLACK : Colors.TEXT, 6, F(20, 'bold'));
 
         // 4x speed
         const is4x = Math.abs(speedMult - 4) < 0.1;
         this._drawRoundBtn(ctx, { x: 240, y: btnY, w: 52, h: 34 }, '4x',
-            is4x ? '#ff6633' : Colors.BG_LIGHT, is4x ? Colors.BLACK : Colors.TEXT, 6, 'bold 20px Arial');
+            is4x ? '#ff6633' : Colors.BG_LIGHT, is4x ? Colors.BLACK : Colors.TEXT, 6, F(20, 'bold'));
 
         // Next wave preview (during PREP)
         if (nextWaveInfo && isPrep) {
-            ctx.fillStyle = Colors.TEXT_DARK; ctx.font = '14px Arial';
+            ctx.fillStyle = Colors.TEXT_DARK; ctx.font = F(14);
             ctx.fillText('Next:', 310, barY + 20);
             let xOff = 310 + ctx.measureText('Next: ').width + 4;
             const enemyColors = {
@@ -268,21 +273,21 @@ export class UI {
                 ctx.beginPath();
                 ctx.arc(xOff + 6, barY + 17, 6, 0, Math.PI * 2);
                 ctx.fill();
-                ctx.fillStyle = '#fff'; ctx.font = '9px Arial';
+                ctx.fillStyle = '#fff'; ctx.font = F(9);
                 const label = etype.charAt(0).toUpperCase();
                 ctx.textAlign = 'center';
                 ctx.fillText(label, xOff + 6, barY + 20);
                 ctx.textAlign = 'left';
                 xOff += 18;
             }
-            ctx.fillStyle = Colors.TEXT_DIM; ctx.font = '14px Arial';
+            ctx.fillStyle = Colors.TEXT_DIM; ctx.font = F(14);
             ctx.fillText(`(${nextWaveInfo.totalEnemies} enemies)`, xOff + 4, barY + 20);
         }
 
         // Current wave info (right side, during COMBAT)
         if (curWaveInfo && gameState === GameState.COMBAT) {
             const infoText = `Wave ${curWaveInfo.wave}: ${curWaveInfo.totalEnemies} enemies`;
-            ctx.fillStyle = Colors.TEXT_DARK; ctx.font = '14px Arial';
+            ctx.fillStyle = Colors.TEXT_DARK; ctx.font = F(14);
             ctx.textAlign = 'right';
             ctx.fillText(infoText, PANEL_X - 10, barY + 28);
             ctx.textAlign = 'left';
@@ -309,7 +314,7 @@ export class UI {
 
         // Title "TOWERS" centered
         ctx.fillStyle = Colors.ACCENT;
-        ctx.font = 'bold 22px Arial';
+        ctx.font = F(22, 'bold');
         ctx.textAlign = 'center';
         ctx.fillText('TOWERS', PANEL_X + PANEL_WIDTH / 2, PANEL_Y + 22);
         ctx.textAlign = 'left';
@@ -330,13 +335,13 @@ export class UI {
                 ctx.drawImage(sprite, btn.x + 4, btn.y + 9);
                 ctx.globalAlpha = 1;
                 // Lock icon
-                ctx.fillStyle = Colors.TEXT_DARK; ctx.font = 'bold 14px Arial';
+                ctx.fillStyle = Colors.TEXT_DARK; ctx.font = F(14, 'bold');
                 ctx.fillText('\u{1F512}', btn.x + btn.w - 24, btn.y + 16);
                 // Name
-                ctx.fillStyle = Colors.TEXT_DARK; ctx.font = '17px Arial';
+                ctx.fillStyle = Colors.TEXT_DARK; ctx.font = F(17);
                 ctx.fillText(data.name, btn.x + 38, btn.y + 16);
                 // Hint
-                ctx.fillStyle = 'rgb(120,90,90)'; ctx.font = '14px Arial';
+                ctx.fillStyle = 'rgb(120,90,90)'; ctx.font = F(14);
                 ctx.fillText('Unlock in Workshop', btn.x + 38, btn.y + 32);
                 ctx.fillStyle = 'rgb(80,80,80)';
                 ctx.fillText(`${data.cost}g`, btn.x + 38, btn.y + 46);
@@ -370,24 +375,24 @@ export class UI {
             ctx.globalAlpha = 1;
 
             // Name (17pt, top-left after icon)
-            ctx.fillStyle = textColor; ctx.font = '17px Arial';
+            ctx.fillStyle = textColor; ctx.font = F(17);
             ctx.fillText(data.name, btn.x + 38, btn.y + 16);
 
             // Cost (17pt, right-aligned)
             ctx.fillStyle = canAfford ? Colors.GOLD : Colors.TEXT_DARK;
-            ctx.font = '17px Arial';
+            ctx.font = F(17);
             const costStr = `${data.cost}g`;
             const costW = ctx.measureText(costStr).width;
             ctx.fillText(costStr, btn.x + btn.w - costW - 4, btn.y + 16);
 
             // Stats line 1 (14px, always shown)
-            ctx.font = '14px Arial'; ctx.fillStyle = statColor;
+            ctx.font = F(14); ctx.fillStyle = statColor;
             if (data.damage > 0) {
                 // Attacking tower: Dmg/Rng/Spd
                 ctx.fillText(`Dmg:${data.damage}  Rng:${data.range.toFixed(1)}  Spd:${data.fire_rate}s`, btn.x + 38, btn.y + 32);
                 // Stats line 2: damage type + traits (only if affordable or selected)
                 if (canAfford || isSel) {
-                    ctx.fillStyle = statColor; ctx.font = '14px Arial';
+                    ctx.fillStyle = statColor; ctx.font = F(14);
                     const dtype = data.damage_type ? (data.damage_type.charAt(0).toUpperCase() + data.damage_type.slice(1)) : '';
                     const traits = [dtype];
                     if (data.splash_radius > 0) traits.push(`AoE:${data.splash_radius}`);
@@ -416,7 +421,7 @@ export class UI {
                 ctx.fillStyle = canAfford ? Colors.GOLD : 'rgb(80,80,60)';
                 ctx.fillText(`${gpt}g every ${interval}s`, btn.x + 38, btn.y + 32);
                 if (canAfford || isSel) {
-                    ctx.fillStyle = statColor; ctx.font = '14px Arial';
+                    ctx.fillStyle = statColor; ctx.font = F(14);
                     ctx.fillText(`(${(gpt * 60 / interval).toFixed(0)}g/min)`, btn.x + 38, btn.y + 46);
                 }
             }
@@ -424,7 +429,7 @@ export class UI {
             // Not enough gold warning (replaces stats line 2)
             if (!canAfford && !isSel) {
                 const shortfall = data.cost - gold;
-                ctx.fillStyle = 'rgb(160,80,80)'; ctx.font = '14px Arial';
+                ctx.fillStyle = 'rgb(160,80,80)'; ctx.font = F(14);
                 ctx.fillText(`Need ${shortfall}g more`, btn.x + 38, btn.y + 46);
             }
         }
@@ -438,7 +443,7 @@ export class UI {
         const w = PANEL_WIDTH - 20;
 
         // Name — large accent
-        ctx.fillStyle = Colors.ACCENT; ctx.font = 'bold 22px Arial';
+        ctx.fillStyle = Colors.ACCENT; ctx.font = F(22, 'bold');
         ctx.fillText(tower.name, x, y + 18);
         y += 26;
 
@@ -447,17 +452,17 @@ export class UI {
         y += 12;
 
         // Level text
-        ctx.fillStyle = Colors.TEXT_DIM; ctx.font = '17px Arial';
+        ctx.fillStyle = Colors.TEXT_DIM; ctx.font = F(17);
         ctx.fillText(`Level ${tower.level} / 8`, x, y + 14);
         y += 20;
 
         // Specialization name
         if (tower.specialization) {
             const spec = TOWER_DATA[tower.type].specializations[tower.specialization];
-            ctx.fillStyle = Colors.ENERGY || '#9933ff'; ctx.font = '17px Arial';
+            ctx.fillStyle = Colors.ENERGY || '#9933ff'; ctx.font = F(17);
             ctx.fillText(spec.name, x, y + 14);
             y += 18;
-            ctx.fillStyle = Colors.TEXT_DARK; ctx.font = '14px Arial';
+            ctx.fillStyle = Colors.TEXT_DARK; ctx.font = F(14);
             ctx.fillText(spec.desc, x, y + 12);
             y += 16;
         }
@@ -469,7 +474,7 @@ export class UI {
 
         // Stats
         const lh = 20;
-        ctx.font = '17px Arial';
+        ctx.font = F(17);
         if (tower.baseDamage > 0) {
             ctx.fillStyle = Colors.TEXT_DIM;
             ctx.fillText(`Damage: ${tower.damage.toFixed(0)}`, x, y + 14); y += lh;
@@ -499,7 +504,7 @@ export class UI {
         }
 
         if (tower.isHighGround) {
-            ctx.fillStyle = 'rgb(180,150,60)'; ctx.font = '14px Arial';
+            ctx.fillStyle = 'rgb(180,150,60)'; ctx.font = F(14);
             ctx.fillText('+1 range (high ground)', x, y + 12); y += 16;
         }
         y += 4;
@@ -509,7 +514,7 @@ export class UI {
             const tgtH = 28;
             this._targetBtn = { x, y, w, h: tgtH };
             this._drawRoundBtn(ctx, this._targetBtn, `Target: ${tower.targetMode}`,
-                Colors.BG_LIGHT, Colors.TEXT, 3, '17px Arial');
+                Colors.BG_LIGHT, Colors.TEXT, 3, F(17));
             y += tgtH + 6;
         } else {
             this._targetBtn = null;
@@ -526,11 +531,11 @@ export class UI {
 
             if (tower.needsSpecialization) {
                 // Specialization choice at level 7→8
-                ctx.fillStyle = '#9933ff'; ctx.font = '14px Arial';
+                ctx.fillStyle = '#9933ff'; ctx.font = F(14);
                 ctx.fillText('SPECIALIZE:', x, y + 12); y += 18;
 
                 if (!canAfford) {
-                    ctx.fillStyle = 'rgb(180,80,80)'; ctx.font = '14px Arial';
+                    ctx.fillStyle = 'rgb(180,80,80)'; ctx.font = F(14);
                     ctx.fillText(`Need ${cost - gold}g more`, x, y + 12); y += 16;
                 }
 
@@ -547,7 +552,7 @@ export class UI {
                     ctx.strokeStyle = borderC; ctx.lineWidth = 1; ctx.stroke();
 
                     ctx.fillStyle = canAfford ? Colors.TEXT : Colors.TEXT_DARK;
-                    ctx.font = '14px Arial';
+                    ctx.font = F(14);
                     ctx.fillText(`${key}: ${spec.name}`, x + 4, y + 16);
                     ctx.fillStyle = Colors.TEXT_DIM;
                     ctx.fillText(spec.desc, x + 4, y + 34);
@@ -569,7 +574,7 @@ export class UI {
                 ctx.fillStyle = bg; ctx.fill();
                 ctx.strokeStyle = borderC; ctx.lineWidth = 1; ctx.stroke();
 
-                ctx.fillStyle = txtC; ctx.font = '14px Arial';
+                ctx.fillStyle = txtC; ctx.font = F(14);
                 ctx.fillText(`Upgrade to Lv ${tower.level + 1}`, x + 6, y + 20);
                 ctx.fillStyle = canAf ? Colors.GOLD : Colors.TEXT_DARK;
                 const costStr = `${cost}g`;
@@ -577,11 +582,11 @@ export class UI {
 
                 y += 34;
                 if (!canAf) {
-                    ctx.fillStyle = 'rgb(160,80,80)'; ctx.font = '14px Arial';
+                    ctx.fillStyle = 'rgb(160,80,80)'; ctx.font = F(14);
                     ctx.fillText(`Need ${cost - gold}g more`, x, y + 12); y += 18;
                 }
                 // Upgrade preview
-                ctx.fillStyle = 'rgb(100,180,100)'; ctx.font = '14px Arial';
+                ctx.fillStyle = 'rgb(100,180,100)'; ctx.font = F(14);
                 if (tower.type === TowerType.GOLD_MINE) {
                     ctx.fillText('+income per level', x, y + 12); y += 18;
                 } else if (tower.type === TowerType.HARRY_DUCK) {
@@ -596,13 +601,13 @@ export class UI {
             roundRect(ctx, x, y, w, 22, 4);
             ctx.fillStyle = 'rgb(40,30,60)'; ctx.fill();
             ctx.strokeStyle = '#9933ff'; ctx.lineWidth = 1; ctx.stroke();
-            ctx.fillStyle = '#9933ff'; ctx.font = '14px Arial'; ctx.textAlign = 'center';
+            ctx.fillStyle = '#9933ff'; ctx.font = F(14); ctx.textAlign = 'center';
             ctx.fillText('MAX LEVEL', x + w / 2, y + 16); ctx.textAlign = 'left';
             y += 28;
         }
 
         if (tower.level === 6) {
-            ctx.fillStyle = Colors.TEXT_DARK; ctx.font = '14px Arial';
+            ctx.fillStyle = Colors.TEXT_DARK; ctx.font = F(14);
             ctx.fillText('Lv 8: Choose spec!', x, y + 12); y += 18;
         }
 
@@ -613,12 +618,12 @@ export class UI {
         this._sellBtn = { x, y, w, h: 26 };
         roundRect(ctx, x, y, w, 26, 4);
         ctx.fillStyle = Colors.DANGER; ctx.fill();
-        ctx.fillStyle = Colors.WHITE; ctx.font = '14px Arial';
+        ctx.fillStyle = Colors.WHITE; ctx.font = F(14);
         ctx.fillText(`Sell (${sellVal}g)`, x + 8, y + 18);
         y += 30;
 
         // Total invested
-        ctx.fillStyle = Colors.TEXT_DARK; ctx.font = '17px Arial';
+        ctx.fillStyle = Colors.TEXT_DARK; ctx.font = F(17);
         ctx.fillText(`Total invested: ${tower.totalInvestment}g`, x, y + 14);
     }
 
@@ -651,11 +656,11 @@ export class UI {
         ctx.beginPath(); ctx.moveTo(cx - 300, 85); ctx.lineTo(cx + 300, 85); ctx.stroke();
 
         // Title
-        ctx.fillStyle = Colors.ACCENT; ctx.font = 'bold 44px Arial'; ctx.textAlign = 'center';
+        ctx.fillStyle = Colors.ACCENT; ctx.font = F(44, 'bold'); ctx.textAlign = 'center';
         ctx.fillText('TOWER DEFENSE', cx, 140);
 
         // Subtitle with horizontal rules
-        ctx.fillStyle = Colors.TEXT_DIM; ctx.font = '17px Arial';
+        ctx.fillStyle = Colors.TEXT_DIM; ctx.font = F(17);
         const subText = 'A Strategic Battle';
         const subW = ctx.measureText(subText).width;
         ctx.fillText(subText, cx, 178);
@@ -667,12 +672,12 @@ export class UI {
         ctx.beginPath(); ctx.moveTo(cx - 140, 200); ctx.lineTo(cx + 140, 200); ctx.stroke();
 
         // Producer credit
-        ctx.fillStyle = Colors.TEXT_DARK; ctx.font = '14px Arial';
+        ctx.fillStyle = Colors.TEXT_DARK; ctx.font = F(14);
         ctx.fillText('Produced by', cx, 225);
-        ctx.fillStyle = Colors.ACCENT; ctx.font = 'bold 28px Arial';
+        ctx.fillStyle = Colors.ACCENT; ctx.font = F(28, 'bold');
         ctx.fillText('Harry the Duck', cx, 257);
-        ctx.fillStyle = Colors.TEXT_DARK; ctx.font = '14px Arial';
-        ctx.fillText('March 2026  |  v0.2.6', cx, 280);
+        ctx.fillStyle = Colors.TEXT_DARK; ctx.font = F(14);
+        ctx.fillText('March 2026  |  v0.2.7', cx, 280);
 
         // Separator
         ctx.strokeStyle = Colors.PANEL_BORDER;
@@ -681,9 +686,9 @@ export class UI {
         // Essence display
         let btnStartY = 330;
         if (essence > 0) {
-            ctx.fillStyle = Colors.TEXT_DARK; ctx.font = '14px Arial';
+            ctx.fillStyle = Colors.TEXT_DARK; ctx.font = F(14);
             ctx.fillText('ESSENCE', cx, 318);
-            ctx.fillStyle = '#9933ff'; ctx.font = 'bold 28px Arial';
+            ctx.fillStyle = '#9933ff'; ctx.font = F(28, 'bold');
             ctx.fillText(String(essence), cx, 348);
             btnStartY = 375;
         }
@@ -698,7 +703,7 @@ export class UI {
         this._menuBtnStartY = btnStartY;
 
         // Footer
-        ctx.fillStyle = 'rgb(60,60,80)'; ctx.font = '14px Arial';
+        ctx.fillStyle = 'rgb(60,60,80)'; ctx.font = F(14);
         ctx.fillText('Press 1-9 to quick-select towers  |  F to toggle speed  |  U to upgrade', cx, SCREEN_HEIGHT - 30);
 
         ctx.textAlign = 'left';
@@ -711,7 +716,7 @@ export class UI {
         ctx.fillRect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
         const cx = SCREEN_WIDTH / 2;
 
-        ctx.fillStyle = Colors.ACCENT; ctx.font = 'bold 28px Arial'; ctx.textAlign = 'center';
+        ctx.fillStyle = Colors.ACCENT; ctx.font = F(28, 'bold'); ctx.textAlign = 'center';
         ctx.fillText('SELECT MAP', cx, 65);
         ctx.textAlign = 'left';
 
@@ -725,13 +730,13 @@ export class UI {
             ctx.strokeStyle = Colors.PANEL_BORDER; ctx.lineWidth = 1; ctx.stroke();
 
             // Map name
-            ctx.fillStyle = Colors.TEXT; ctx.font = '17px Arial';
+            ctx.fillStyle = Colors.TEXT; ctx.font = F(17);
             ctx.fillText(map.name, btn.x + 15, btn.y + 22);
 
             // Difficulty
             const diffColors = { Easy: Colors.HP_GREEN, Medium: Colors.HP_YELLOW, Hard: Colors.HP_RED, Expert: '#9933ff' };
             ctx.fillStyle = diffColors[map.difficulty] || Colors.TEXT;
-            ctx.font = '14px Arial';
+            ctx.font = F(14);
             ctx.fillText(map.difficulty, btn.x + 15, btn.y + 42);
 
             // Spawn/exit count
@@ -752,7 +757,7 @@ export class UI {
         ctx.fillRect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
         const cx = SCREEN_WIDTH / 2;
 
-        ctx.fillStyle = Colors.ACCENT; ctx.font = 'bold 28px Arial'; ctx.textAlign = 'center';
+        ctx.fillStyle = Colors.ACCENT; ctx.font = F(28, 'bold'); ctx.textAlign = 'center';
         ctx.fillText('PAUSED', cx, 330);
         ctx.textAlign = 'left';
 
@@ -768,17 +773,17 @@ export class UI {
         ctx.fillRect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
         const cx = SCREEN_WIDTH / 2;
 
-        ctx.fillStyle = Colors.ACCENT; ctx.font = 'bold 44px Arial'; ctx.textAlign = 'center';
+        ctx.fillStyle = Colors.ACCENT; ctx.font = F(44, 'bold'); ctx.textAlign = 'center';
         ctx.fillText('VICTORY!', cx, 240);
 
-        ctx.fillStyle = Colors.TEXT; ctx.font = '17px Arial';
+        ctx.fillStyle = Colors.TEXT; ctx.font = F(17);
         ctx.fillText(`Waves Completed: ${wave}`, cx, 300);
         ctx.fillText(`Enemies Killed: ${totalKills}`, cx, 325);
         ctx.fillText(`Bosses Slain: ${bossesKilled}`, cx, 350);
 
         // Essence preview
         const ess = wave * 10 + bossesKilled * 100 + 500;
-        ctx.fillStyle = '#9933ff'; ctx.font = 'bold 22px Arial';
+        ctx.fillStyle = '#9933ff'; ctx.font = F(22, 'bold');
         ctx.fillText(`Essence Earned: +${ess}`, cx, 400);
 
         this._drawMenuButton(ctx, { x: cx - 140, y: 520, w: 280, h: 50 }, 'Continue', Colors.ACCENT, Colors.BLACK);
@@ -790,17 +795,17 @@ export class UI {
         ctx.fillRect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
         const cx = SCREEN_WIDTH / 2;
 
-        ctx.fillStyle = Colors.DANGER; ctx.font = 'bold 44px Arial'; ctx.textAlign = 'center';
+        ctx.fillStyle = Colors.DANGER; ctx.font = F(44, 'bold'); ctx.textAlign = 'center';
         ctx.fillText('DEFEAT', cx, 240);
 
-        ctx.fillStyle = Colors.TEXT; ctx.font = '17px Arial';
+        ctx.fillStyle = Colors.TEXT; ctx.font = F(17);
         ctx.fillText(`Waves Completed: ${wave}`, cx, 300);
         ctx.fillText(`Enemies Killed: ${totalKills}`, cx, 325);
         ctx.fillText(`Bosses Slain: ${bossesKilled}`, cx, 350);
 
         // Essence preview
         const ess = wave * 10 + bossesKilled * 100;
-        ctx.fillStyle = '#9933ff'; ctx.font = 'bold 22px Arial';
+        ctx.fillStyle = '#9933ff'; ctx.font = F(22, 'bold');
         ctx.fillText(`Essence Earned: +${ess}`, cx, 400);
 
         this._drawMenuButton(ctx, { x: cx - 140, y: 520, w: 280, h: 50 }, 'Continue', Colors.ACCENT, Colors.BLACK);
@@ -828,12 +833,12 @@ export class UI {
         roundRect(ctx, x, y, w, h, 10);
         ctx.strokeStyle = Colors.PANEL_BORDER; ctx.lineWidth = 1; ctx.stroke();
         // Text
-        ctx.fillStyle = textColor; ctx.font = '22px Arial'; ctx.textAlign = 'center';
+        ctx.fillStyle = textColor; ctx.font = F(22); ctx.textAlign = 'center';
         ctx.fillText(text, x + w / 2, y + h / 2 + 7);
         ctx.textAlign = 'left';
     }
 
-    _drawRoundBtn(ctx, rect, text, bgColor, textColor, radius = 6, font = '17px Arial') {
+    _drawRoundBtn(ctx, rect, text, bgColor, textColor, radius = 6, font = F(17)) {
         const { x, y, w, h } = rect;
         roundRect(ctx, x, y, w, h, radius);
         ctx.fillStyle = bgColor; ctx.fill();

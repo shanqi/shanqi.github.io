@@ -3,7 +3,7 @@
 import {
     SCREEN_WIDTH, SCREEN_HEIGHT, TILE_SIZE, GRID_WIDTH, GRID_HEIGHT,
     GRID_OFFSET_X, GRID_OFFSET_Y, TOP_BAR_HEIGHT, BOTTOM_BAR_HEIGHT,
-    PANEL_WIDTH, TileType, Colors
+    PANEL_WIDTH, TileType, Colors, FONT
 } from './constants.js';
 import { getTileSprite } from './sprites.js';
 import { findRoute } from './pathfinding.js';
@@ -118,13 +118,13 @@ export class MapEditor {
         ctx.fillRect(0, 0, SCREEN_WIDTH, TOP_BAR_HEIGHT);
         // Title
         ctx.fillStyle = Colors.ACCENT;
-        ctx.font = 'bold 20px Arial, sans-serif';
+        ctx.font = `bold 20px ${FONT}`;
         ctx.textAlign = 'left';
         ctx.textBaseline = 'middle';
         ctx.fillText(`MAP EDITOR - ${this.mapName}`, 16, TOP_BAR_HEIGHT / 2);
         // Grid size right-aligned
         ctx.fillStyle = Colors.TEXT_DIM;
-        ctx.font = '14px Arial, sans-serif';
+        ctx.font = `14px ${FONT}`;
         ctx.textAlign = 'right';
         ctx.fillText(`${GRID_WIDTH} x ${GRID_HEIGHT}`, SCREEN_WIDTH - PANEL_WIDTH - 16, TOP_BAR_HEIGHT / 2);
         ctx.textAlign = 'left';
@@ -201,7 +201,7 @@ export class MapEditor {
 
         // Panel title
         ctx.fillStyle = Colors.TEXT_DIM;
-        ctx.font = 'bold 14px Arial, sans-serif';
+        ctx.font = `bold 14px ${FONT}`;
         ctx.textAlign = 'left';
         ctx.fillText('TILES', panelX + 10, GRID_OFFSET_Y - 4);
 
@@ -238,7 +238,7 @@ export class MapEditor {
 
             // Label
             ctx.fillStyle = isSelected ? Colors.BLACK : Colors.TEXT;
-            ctx.font = '13px Arial, sans-serif';
+            ctx.font = `13px ${FONT}`;
             ctx.textAlign = 'left';
             ctx.textBaseline = 'middle';
             ctx.fillText(btn.label, btn.x + 38, btn.y + btn.h / 2);
@@ -247,7 +247,7 @@ export class MapEditor {
             const idx = this.palette.indexOf(btn.tileType);
             if (idx >= 0) {
                 ctx.fillStyle = isSelected ? 'rgba(0,0,0,0.5)' : Colors.TEXT_DARK;
-                ctx.font = '11px Arial, sans-serif';
+                ctx.font = `11px ${FONT}`;
                 ctx.textAlign = 'right';
                 ctx.fillText(`[${idx}]`, btn.x + btn.w - 8, btn.y + btn.h / 2);
             }
@@ -269,7 +269,7 @@ export class MapEditor {
             }
 
             ctx.fillStyle = Colors.TEXT;
-            ctx.font = '13px Arial, sans-serif';
+            ctx.font = `13px ${FONT}`;
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
             ctx.fillText(btn.label, btn.x + btn.w / 2, btn.y + btn.h / 2);
@@ -283,7 +283,7 @@ export class MapEditor {
         // Status message
         if (this.statusMsg) {
             ctx.fillStyle = Colors.ACCENT;
-            ctx.font = '13px Arial, sans-serif';
+            ctx.font = `13px ${FONT}`;
             ctx.textAlign = 'left';
             ctx.textBaseline = 'middle';
             ctx.fillText(this.statusMsg, 16, bottomY + BOTTOM_BAR_HEIGHT / 2);
@@ -291,7 +291,7 @@ export class MapEditor {
 
         // Selected tile info
         ctx.fillStyle = Colors.TEXT_DIM;
-        ctx.font = '12px Arial, sans-serif';
+        ctx.font = `12px ${FONT}`;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         const selIdx = this.palette.indexOf(this.selectedTile);
@@ -308,7 +308,7 @@ export class MapEditor {
             }
         }
         ctx.fillStyle = Colors.TEXT_DIM;
-        ctx.font = '12px Arial, sans-serif';
+        ctx.font = `12px ${FONT}`;
         ctx.textAlign = 'right';
         ctx.fillText(`Spawns: ${spawnCount}  Exits: ${exitCount}`, SCREEN_WIDTH - PANEL_WIDTH - 16, bottomY + BOTTOM_BAR_HEIGHT / 2);
 
@@ -325,7 +325,7 @@ export class MapEditor {
             ctx.stroke();
         }
         ctx.fillStyle = Colors.TEXT;
-        ctx.font = '13px Arial, sans-serif';
+        ctx.font = `13px ${FONT}`;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillText('Back (Esc)', bb.x + bb.w / 2, bb.y + bb.h / 2);

@@ -4,7 +4,7 @@ import {
     GameState, TileType, TowerType, EnemyType,
     STARTING_GOLD, STARTING_LIVES, INTEREST_RATE, INTEREST_CAP,
     SELL_REFUND_RATIO, PERFECT_WAVE_BONUS, EARLY_START_BONUS, MAX_GOLD_MINES, TOTAL_WAVES,
-    SYNERGIES, TILE_SIZE
+    SYNERGIES, TILE_SIZE, FONT
 } from './constants.js';
 import { MAP_DATA } from './mapData.js';
 import { TOWER_DATA, TOWER_ORDER } from './towerData.js';
@@ -173,11 +173,11 @@ export class Game {
                     this.ctx.fillStyle = '#1a1a2e';
                     this.ctx.fillRect(0, 0, 1240, 780);
                     this.ctx.fillStyle = '#e6b800';
-                    this.ctx.font = 'bold 36px Arial';
+                    this.ctx.font = `bold 36px ${FONT}`;
                     this.ctx.textAlign = 'center';
                     this.ctx.fillText('Thanks for playing!', 620, 370);
                     this.ctx.fillStyle = '#969696';
-                    this.ctx.font = '17px Arial';
+                    this.ctx.font = `17px ${FONT}`;
                     this.ctx.fillText('You can close this tab now.', 620, 410);
                     this.ctx.textAlign = 'left';
                     this._quit = true;

@@ -1,6 +1,6 @@
 // effects.js — Particles, floating text, expanding rings
 
-import { Colors } from './constants.js';
+import { Colors, FONT } from './constants.js';
 
 export class EffectSystem {
     constructor() {
@@ -240,7 +240,7 @@ export class EffectSystem {
             const alpha = Math.max(0, t.life / t.maxLife);
             ctx.globalAlpha = alpha;
             ctx.fillStyle = t.color;
-            ctx.font = 'bold 14px Arial';
+            ctx.font = `bold 14px ${FONT}`;
             ctx.textAlign = 'center';
             ctx.fillText(t.text, t.x, t.y);
         }
@@ -259,7 +259,7 @@ export class EffectSystem {
             ctx.translate(sx, sy);
             ctx.scale(a.scale, a.scale);
             ctx.fillStyle = a.color;
-            ctx.font = 'bold 36px Arial';
+            ctx.font = `bold 36px ${FONT}`;
             ctx.textAlign = 'center';
             ctx.fillText(a.text, 0, 0);
             ctx.restore();
