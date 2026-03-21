@@ -672,7 +672,7 @@ export class UI {
         ctx.fillStyle = Colors.ACCENT; ctx.font = 'bold 28px Arial';
         ctx.fillText('Harry the Duck', cx, 257);
         ctx.fillStyle = Colors.TEXT_DARK; ctx.font = '14px Arial';
-        ctx.fillText('March 2026  |  v0.2.2', cx, 280);
+        ctx.fillText('March 2026  |  v0.2.3', cx, 280);
 
         // Separator
         ctx.strokeStyle = Colors.PANEL_BORDER;

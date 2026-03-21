@@ -408,22 +408,23 @@ export class MapEditor {
     }
 
     handleKeyDown(key, ctrlKey = false) {
-        if (key === 'Escape') {
+        const k = key.toLowerCase();
+        if (k === 'escape') {
             return 'quit';
         }
-        if (key === 'v' || key === 'V') {
+        if (k === 'v') {
             this._validate();
             return null;
         }
-        if (key === 'c' || key === 'C') {
+        if (k === 'c') {
             this._clear();
             return null;
         }
-        if (key === 'g' || key === 'G') {
+        if (k === 'g') {
             this._generateRandom();
             return null;
         }
-        if ((key === 'z' || key === 'Z') && ctrlKey) {
+        if (k === 'z' && ctrlKey) {
             this._undo();
             return null;
         }
