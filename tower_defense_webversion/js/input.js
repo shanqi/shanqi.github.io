@@ -14,13 +14,16 @@ export class InputManager {
         this.gridY = -1;
         this.isOnGrid = false;
 
-        this.leftClick = false;
-        this.rightClick = false;
+        this.leftClick = false;      // true for one frame on click
+        this.rightClick = false;     // true for one frame on right click
+        this.leftDown = false;       // true while left button held
+        this.rightDown = false;      // true while right button held
         this.keysPressed = new Set();
         this.keysJustPressed = new Set();
 
         this.canvas.addEventListener('mousemove', e => this.onMouseMove(e));
         this.canvas.addEventListener('mousedown', e => this.onMouseDown(e));
+        this.canvas.addEventListener('mouseup', e => this.onMouseUp(e));
         this.canvas.addEventListener('contextmenu', e => e.preventDefault());
         window.addEventListener('keydown', e => this.onKeyDown(e));
         window.addEventListener('keyup', e => this.onKeyUp(e));
@@ -42,8 +45,13 @@ export class InputManager {
 
     onMouseDown(e) {
         this.onMouseMove(e); // Update position
-        if (e.button === 0) this.leftClick = true;
-        if (e.button === 2) this.rightClick = true;
+        if (e.button === 0) { this.leftClick = true; this.leftDown = true; }
+        if (e.button === 2) { this.rightClick = true; this.rightDown = true; }
+    }
+
+    onMouseUp(e) {
+        if (e.button === 0) this.leftDown = false;
+        if (e.button === 2) this.rightDown = false;
     }
 
     onKeyDown(e) {

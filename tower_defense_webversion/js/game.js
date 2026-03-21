@@ -213,35 +213,46 @@ export class Game {
         if (!this.mapEditor) return;
         this.mapEditor.update(dt);
 
+        // ESC key — direct check first
+        if (this.input.consumeKey('escape')) {
+            this._loadCustomMaps();
+            this.mapEditor = null;
+            this.state = GameState.MAIN_MENU;
+            this.input.clearFrame();
+            return;
+        }
+
+        // Left click (single press)
         if (this.input.consumeClick()) {
             const result = this.mapEditor.handleMouseDown(this.input.mouseX, this.input.mouseY, 0);
             if (result === 'quit') {
                 this._loadCustomMaps();
                 this.mapEditor = null;
                 this.state = GameState.MAIN_MENU;
+                this.input.clearFrame();
+                return;
             }
         }
+
+        // Right click (single press)
         if (this.input.consumeRightClick()) {
             this.mapEditor.handleMouseDown(this.input.mouseX, this.input.mouseY, 2);
         }
 
-        // Mouse move for painting
-        this.mapEditor.handleMouseMove(this.input.mouseX, this.input.mouseY);
+        // Drag painting while mouse held
+        if (this.input.leftDown || this.input.rightDown) {
+            this.mapEditor.handleMouseMove(this.input.mouseX, this.input.mouseY);
+        }
 
-        // Check for mouse up (simplified — clear painting on no button held)
-        if (!this.input.keysPressed.has('_mousedown')) {
+        // Mouse released — stop painting/erasing
+        if (!this.input.leftDown && !this.input.rightDown) {
             this.mapEditor.handleMouseUp();
         }
 
-        // Keyboard shortcuts
-        for (const key of ['escape', 'v', 'c', 'g', 'z', '0', '1', '2', '3', '4', '5', '6', '7']) {
+        // Keyboard shortcuts (not escape — handled above)
+        for (const key of ['v', 'c', 'g', 'z', '0', '1', '2', '3', '4', '5', '6', '7']) {
             if (this.input.consumeKey(key)) {
-                const result = this.mapEditor.handleKeyDown(key, this.input.keysPressed.has('control') || this.input.keysPressed.has('meta'));
-                if (result === 'quit') {
-                    this._loadCustomMaps();
-                    this.mapEditor = null;
-                    this.state = GameState.MAIN_MENU;
-                }
+                this.mapEditor.handleKeyDown(key, this.input.keysPressed.has('control') || this.input.keysPressed.has('meta'));
             }
         }
         this.input.clearFrame();
