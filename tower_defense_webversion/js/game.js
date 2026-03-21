@@ -23,6 +23,7 @@ import { InputManager } from './input.js';
 import { loadSaveData, saveSaveData, calculateEssence } from './saveData.js';
 import { Workshop } from './workshop.js';
 import { MapEditor } from './mapEditor.js';
+import { Bestiary } from './bestiary.js';
 
 export class Game {
     constructor(canvas) {
@@ -41,6 +42,7 @@ export class Game {
         // Save data
         this.saveData = loadSaveData();
         this.workshop = new Workshop();
+        this.bestiary = new Bestiary();
         this.mapEditor = null;
 
         // Game data (initialized on map load)
@@ -56,6 +58,7 @@ export class Game {
         this.enemies = [];
         this.projectiles = [];
         this.ducks = [];
+        this.recentPlacements = []; // Undo grace period tracking (max 3)
 
         this.selectedTower = null;
         this.placingTowerType = null;
@@ -96,6 +99,7 @@ export class Game {
         this.enemies = [];
         this.projectiles = [];
         this.ducks = [];
+        this.recentPlacements = [];
         this.selectedTower = null;
         this.placingTowerType = null;
         this.waveActive = false;
@@ -118,6 +122,11 @@ export class Game {
 
         if (this.state === GameState.WORKSHOP) {
             this.handleWorkshopInput();
+            return;
+        }
+
+        if (this.state === GameState.BESTIARY) {
+            this.handleBestiaryInput();
             return;
         }
 
@@ -153,6 +162,16 @@ export class Game {
             // No tower updates during prep — gold mines and spawners only work in combat
         }
 
+        // Update undo grace period timers (runs in both PREP and COMBAT)
+        for (let i = this.recentPlacements.length - 1; i >= 0; i--) {
+            this.recentPlacements[i].timer -= gameDt;
+            this.recentPlacements[i].tower._undoGracePeriod = this.recentPlacements[i].timer;
+            if (this.recentPlacements[i].timer <= 0) {
+                this.recentPlacements[i].tower._undoGracePeriod = 0;
+                this.recentPlacements.splice(i, 1);
+            }
+        }
+
         this.updateSynergies();
         this.effects.update(gameDt);
         this.renderer.advance(gameDt);
@@ -167,6 +186,9 @@ export class Game {
                 else if (btn === 'editor') {
                     this.mapEditor = new MapEditor();
                     this.state = GameState.EDITOR;
+                }
+                else if (btn === 'bestiary') {
+                    this.state = GameState.BESTIARY;
                 }
                 else if (btn === 'quit') {
                     // Web can't close the tab, so show a thank-you and stop the game loop
@@ -204,6 +226,19 @@ export class Game {
         }
         if (this.input.consumeKey('escape')) {
             saveSaveData(this.saveData);
+            this.state = GameState.MAIN_MENU;
+        }
+        this.input.clearFrame();
+    }
+
+    handleBestiaryInput() {
+        if (this.input.consumeClick()) {
+            const result = this.bestiary.handleClick(this.input.mouseX, this.input.mouseY);
+            if (result === 'back') {
+                this.state = GameState.MAIN_MENU;
+            }
+        }
+        if (this.input.consumeKey('escape')) {
             this.state = GameState.MAIN_MENU;
         }
         this.input.clearFrame();
@@ -332,6 +367,11 @@ export class Game {
             this.speedMultiplier = this.speedMultiplier === 1 ? 2 : this.speedMultiplier === 2 ? 4 : 1;
         }
 
+        // Ctrl+Z / Cmd+Z: undo recent tower placement
+        if ((this.input.keysPressed.has('control') || this.input.keysPressed.has('meta')) && this.input.consumeKey('z')) {
+            this.undoTowerPlacement();
+        }
+
         if (this.input.consumeKey('u') && this.selectedTower) this.upgradeTower();
         if (this.input.consumeKey('s') && this.selectedTower) this.sellTower();
         if (this.input.consumeKey('t') && this.selectedTower) this.selectedTower.cycleTargetMode();
@@ -457,6 +497,16 @@ export class Game {
 
         if (type === TowerType.GOLD_MINE) this.goldMineCount++;
 
+        // Track for undo grace period (max 3 recent placements)
+        tower._undoGracePeriod = 3.0;
+        this.recentPlacements.push({
+            tower, gridX: gx, gridY: gy, wasHighGround: isHighGround, timer: 3.0
+        });
+        if (this.recentPlacements.length > 3) {
+            this.recentPlacements[0].tower._undoGracePeriod = 0;
+            this.recentPlacements.shift();
+        }
+
         // Keep placing if holding the same tower type
     }
 
@@ -505,6 +555,36 @@ export class Game {
         this.towers = this.towers.filter(t => t.id !== tower.id);
         this.deselectTower();
         this.effects.addFloatingText(tower.pixelX, tower.pixelY, `+$${refund}`, '#ffd700');
+    }
+
+    undoTowerPlacement() {
+        if (this.recentPlacements.length === 0) return;
+
+        const entry = this.recentPlacements.pop();
+        const tower = entry.tower;
+        const refund = tower.totalInvestment;
+
+        // Refund full cost
+        this.gold += refund;
+
+        // Restore tile
+        this.tiles[entry.gridY][entry.gridX] = entry.wasHighGround ? TileType.HIGH_GROUND : TileType.GRASS;
+
+        // Gold mine count
+        if (tower.type === TowerType.GOLD_MINE) this.goldMineCount--;
+
+        // Remove tower
+        this.towers = this.towers.filter(t => t.id !== tower.id);
+
+        // Deselect if this tower was selected
+        if (this.selectedTower && this.selectedTower.id === tower.id) {
+            this.deselectTower();
+        }
+
+        // Clear grace period marker
+        tower._undoGracePeriod = 0;
+
+        this.effects.addFloatingText(tower.pixelX, tower.pixelY, `Undo! +$${refund}`, '#64ff64');
     }
 
     startWave() {
@@ -598,6 +678,13 @@ export class Game {
         const enemy = new Enemy(type, this.wave, route, spawnIndex);
         this.enemies.push(enemy);
         this.effects.addPortalParticles(enemy.pixelX, enemy.pixelY);
+
+        // Track enemy discovery for bestiary
+        if (!this.saveData.stats.discovered) this.saveData.stats.discovered = {};
+        if (!this.saveData.stats.discovered[type]) {
+            this.saveData.stats.discovered[type] = true;
+            saveSaveData(this.saveData);
+        }
     }
 
     updateEnemies(dt) {
@@ -809,6 +896,10 @@ export class Game {
     }
 
     processKills(kills, tower) {
+        // Track kills per tower
+        if (tower && kills.length > 0) {
+            tower.totalKills = (tower.totalKills || 0) + kills.length;
+        }
         // Additional processing for kills (combos, mint bonus, etc.)
         for (const e of kills) {
             if (tower?.specialization === 'A' && tower.type === TowerType.DOOM_SPIRE) {
@@ -967,6 +1058,11 @@ export class Game {
             return;
         }
 
+        if (this.state === GameState.BESTIARY) {
+            this.bestiary.draw(this.ctx, this.saveData);
+            return;
+        }
+
         if (this.state === GameState.EDITOR) {
             if (this.mapEditor) {
                 this.mapEditor.draw(this.ctx, this.input.mouseX, this.input.mouseY);
@@ -1007,6 +1103,12 @@ export class Game {
         this.ui.drawHUD(this.ctx, this.gold, this.lives, this.wave, aliveEnemies, this.state, this.speedMultiplier);
         this.ui.drawBottomBar(this.ctx, this.state, this.speedMultiplier, nextWave, curWave);
         this.ui.drawShopPanel(this.ctx, this.gold, this.selectedTower, this.placingTowerType, this.saveData.unlocks);
+
+        // Hover tooltip (before overlay menus, only during active gameplay)
+        if (this.state === GameState.PREP || this.state === GameState.COMBAT) {
+            this.ui.drawTooltip(this.ctx, this.input.mouseX, this.input.mouseY,
+                this.towers, this.enemies, this.tiles, this.placingTowerType);
+        }
 
         // Overlay menus
         if (this.state === GameState.PAUSED) this.ui.drawPauseMenu(this.ctx);

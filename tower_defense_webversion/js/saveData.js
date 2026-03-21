@@ -22,6 +22,7 @@ const DEFAULT_SAVE = {
         games_played: 0,
         best_wave: 0,
         total_kills: 0,
+        discovered: {},
     },
 };
 

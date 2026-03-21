@@ -4,10 +4,12 @@ import {
     SCREEN_WIDTH, SCREEN_HEIGHT, TILE_SIZE,
     GRID_WIDTH, GRID_HEIGHT, GRID_OFFSET_X, GRID_OFFSET_Y,
     PANEL_WIDTH, TOP_BAR_HEIGHT, BOTTOM_BAR_HEIGHT,
-    TowerType, GameState, Colors, TowerColors, TOTAL_WAVES, SELL_REFUND_RATIO,
+    TowerType, TileType, GameState, Colors, TowerColors, TOTAL_WAVES, SELL_REFUND_RATIO,
+    ARMOR_MATRIX, DamageType, ArmorType,
     FONT, FONT_MONO
 } from './constants.js';
 import { TOWER_DATA, TOWER_ORDER } from './towerData.js';
+import { ENEMY_DATA } from './enemyData.js';
 import { getTowerSprite } from './sprites.js';
 
 const PANEL_X = SCREEN_WIDTH - PANEL_WIDTH;
@@ -46,6 +48,10 @@ export class UI {
         this._specABtn = null;
         this._specBBtn = null;
         this._showingTowerInfo = false;
+        // Tooltip hover state
+        this._tooltipTimer = 0;
+        this._lastMX = 0;
+        this._lastMY = 0;
     }
 
     _buildShopButtons() {
@@ -107,7 +113,8 @@ export class UI {
             if (this._hitRect(mx, my, cx - 160, by, 320, 58)) return 'play';
             if (this._hitRect(mx, my, cx - 160, by + 68, 320, 58)) return 'workshop';
             if (this._hitRect(mx, my, cx - 160, by + 136, 320, 58)) return 'editor';
-            if (this._hitRect(mx, my, cx - 160, by + 204, 320, 58)) return 'quit';
+            if (this._hitRect(mx, my, cx - 160, by + 204, 320, 58)) return 'bestiary';
+            if (this._hitRect(mx, my, cx - 160, by + 272, 320, 58)) return 'quit';
             return null;
         }
         if (gameState === GameState.MAP_SELECT) {
@@ -691,7 +698,7 @@ export class UI {
         ctx.fillStyle = Colors.ACCENT; ctx.font = F(28, 'bold');
         ctx.fillText('Harry the Duck', cx, 257);
         ctx.fillStyle = Colors.TEXT_DARK; ctx.font = F(14);
-        ctx.fillText('March 2026  |  v0.2.13', cx, 280);
+        ctx.fillText('March 2026  |  v0.2.15', cx, 280);
 
         // Separator
         ctx.strokeStyle = Colors.PANEL_BORDER;
@@ -711,7 +718,8 @@ export class UI {
         this._drawMenuButton(ctx, { x: cx - 160, y: btnStartY, w: 320, h: 58 }, 'Play Game', Colors.ACCENT, Colors.BLACK);
         this._drawMenuButton(ctx, { x: cx - 160, y: btnStartY + 68, w: 320, h: 58 }, 'Workshop', Colors.BG_LIGHT, Colors.TEXT);
         this._drawMenuButton(ctx, { x: cx - 160, y: btnStartY + 136, w: 320, h: 58 }, 'Map Editor', Colors.BG_LIGHT, Colors.TEXT);
-        this._drawMenuButton(ctx, { x: cx - 160, y: btnStartY + 204, w: 320, h: 58 }, 'Quit', 'rgb(40,40,50)', Colors.TEXT_DIM);
+        this._drawMenuButton(ctx, { x: cx - 160, y: btnStartY + 204, w: 320, h: 58 }, 'Bestiary', Colors.BG_LIGHT, Colors.TEXT);
+        this._drawMenuButton(ctx, { x: cx - 160, y: btnStartY + 272, w: 320, h: 58 }, 'Quit', 'rgb(40,40,50)', Colors.TEXT_DIM);
 
         // Store button positions for hit testing
         this._menuBtnStartY = btnStartY;
@@ -860,6 +868,233 @@ export class UI {
         ctx.fillStyle = textColor; ctx.font = font; ctx.textAlign = 'center';
         ctx.fillText(text, x + w / 2, y + h / 2 + 5);
         ctx.textAlign = 'left';
+    }
+
+    // ─── Hover Tooltip ─────────────────────────────
+
+    drawTooltip(ctx, mouseX, mouseY, towers, enemies, tiles, placingType) {
+        // Reset timer if mouse moved more than 5px
+        const dx = mouseX - this._lastMX;
+        const dy = mouseY - this._lastMY;
+        if (Math.sqrt(dx * dx + dy * dy) > 5) {
+            this._tooltipTimer = 0;
+            this._lastMX = mouseX;
+            this._lastMY = mouseY;
+        }
+
+        // Don't show tooltips when mouse is in the shop panel
+        if (mouseX >= PANEL_X) return;
+        // Don't show in top/bottom bars
+        if (mouseY < TOP_BAR_HEIGHT || mouseY > SCREEN_HEIGHT - BOTTOM_BAR_HEIGHT) return;
+
+        // Accumulate time (assume ~16ms per frame at 60fps)
+        this._tooltipTimer += 1 / 60;
+        if (this._tooltipTimer < 0.3) return;
+
+        // Determine what's under the cursor
+        const gridX = Math.floor((mouseX - GRID_OFFSET_X) / TILE_SIZE);
+        const gridY = Math.floor((mouseY - GRID_OFFSET_Y) / TILE_SIZE);
+        const onGrid = gridX >= 0 && gridX < GRID_WIDTH && gridY >= 0 && gridY < GRID_HEIGHT;
+
+        let title = '';
+        let lines = [];
+
+        // Check for tower in shop placing mode
+        if (placingType && onGrid) {
+            const data = TOWER_DATA[placingType];
+            title = data.name;
+            if (data.damage > 0) {
+                lines.push(`Damage: ${data.damage}`);
+                lines.push(`Range: ${data.range.toFixed(1)}`);
+                lines.push(`Fire Rate: ${data.fire_rate}s`);
+                if (data.damage_type) {
+                    const dt = data.damage_type.charAt(0).toUpperCase() + data.damage_type.slice(1);
+                    lines.push(`Type: ${dt}`);
+                }
+                if (data.splash_radius > 0) lines.push(`Splash Radius: ${data.splash_radius}`);
+                if (data.chain_count > 0) lines.push(`Chain: ${data.chain_count} targets`);
+                if (data.burn_dps > 0) lines.push(`Burn: ${data.burn_dps} dps for ${data.burn_duration}s`);
+                if (data.slow_strength > 0) lines.push(`Slow: ${Math.round(data.slow_strength * 100)}% for ${data.slow_duration}s`);
+                if (data.is_aoe_pulse) lines.push('Pulse AoE: hits all in range');
+                if (!data.can_hit_air) lines.push('Cannot hit air');
+                if (!data.can_hit_ground) lines.push('Air targets only');
+                // Strong/weak against
+                if (data.damage_type) {
+                    const strong = [];
+                    const weak = [];
+                    for (const [armorName, mults] of Object.entries(ARMOR_MATRIX)) {
+                        const m = mults[data.damage_type];
+                        if (m > 1.0) strong.push(armorName);
+                        else if (m < 1.0) weak.push(armorName);
+                    }
+                    if (strong.length > 0) lines.push(`Strong vs: ${strong.join(', ')}`);
+                    if (weak.length > 0) lines.push(`Weak vs: ${weak.join(', ')}`);
+                }
+            } else if (data.is_spawner) {
+                lines.push(`Duck HP: ${data.duck_hp}`);
+                lines.push(`Duck Damage: ${data.duck_damage}`);
+                lines.push(`Spawn every ${data.spawn_interval}s`);
+            } else if (data.is_support) {
+                lines.push('Buffs nearby towers');
+                lines.push(`Buff Range: ${data.range.toFixed(1)}`);
+                lines.push(`+${Math.round(data.aura_damage * 100)}% dmg or ${Math.round((1 - data.aura_attack_speed) * 100)}% faster`);
+            } else if (data.is_economy) {
+                lines.push(`${data.gold_per_tick}g every ${data.tick_interval}s`);
+                lines.push(`(${(data.gold_per_tick * 60 / data.tick_interval).toFixed(0)}g/min)`);
+            }
+            if (data.description) lines.push(data.description);
+        }
+
+        // Check for placed tower on grid
+        if (!title && onGrid) {
+            const tower = towers.find(t => t.gridX === gridX && t.gridY === gridY);
+            if (tower) {
+                title = tower.name;
+                lines.push(`Level ${tower.level}`);
+                lines.push(`Kills: ${tower.totalKills || 0}`);
+                if (tower.baseDamage > 0) {
+                    lines.push(`Target: ${tower.targetMode}`);
+                    const dps = tower.damage / tower.fireRate;
+                    lines.push(`DPS: ${dps.toFixed(1)}`);
+                } else if (tower.type === TowerType.GOLD_MINE) {
+                    const gpm = tower.currentGoldPerTick * 60 / tower.currentTickInterval;
+                    lines.push(`Income: ${gpm.toFixed(0)}g/min`);
+                } else if (tower.type === TowerType.HARRY_DUCK) {
+                    lines.push(`Duck HP: ${tower.duckHP}  Dmg: ${tower.duckDamage}`);
+                } else if (tower.type === TowerType.AURA) {
+                    lines.push(`Buff: ${tower.auraBuff}`);
+                }
+                if (tower.specialization) {
+                    const spec = TOWER_DATA[tower.type].specializations[tower.specialization];
+                    lines.push(`Spec: ${spec.name}`);
+                }
+            }
+        }
+
+        // Check for enemy under cursor (pixel-based hit test)
+        if (!title) {
+            for (const e of enemies) {
+                if (!e.alive || e.reachedExit) continue;
+                const ex = e.pixelX;
+                const ey = e.pixelY;
+                const halfSize = (e.size || 32) / 2;
+                if (mouseX >= ex - halfSize && mouseX <= ex + halfSize &&
+                    mouseY >= ey - halfSize && mouseY <= ey + halfSize) {
+                    title = e.name;
+                    lines.push(`HP: ${Math.ceil(e.hp)} / ${Math.ceil(e.maxHP)}`);
+                    if (e.armor) {
+                        const armorLabel = e.armor.charAt(0).toUpperCase() + e.armor.slice(1);
+                        lines.push(`Armor: ${armorLabel}`);
+                    }
+                    lines.push(`Speed: ${e.baseSpeed.toFixed(1)}`);
+                    if (e.isFlying) lines.push('Flying');
+                    // Ability descriptions
+                    if (e.ability === 'heal_aura') lines.push('Heals nearby allies');
+                    if (e.ability === 'disable_tower') lines.push('Disables towers');
+                    if (e.ability === 'debuff_immune') lines.push('Immune to slow');
+                    if (e.ability === 'summon_on_death') lines.push(`Spawns ${e.summonCount} imps on death`);
+                    if (e.ability === 'tower_stun') lines.push('Stuns nearby towers');
+                    break;
+                }
+            }
+        }
+
+        // Check tile types
+        if (!title && onGrid && tiles) {
+            const tile = tiles[gridY]?.[gridX];
+            if (tile === TileType.HIGH_GROUND) {
+                title = 'High Ground';
+                lines.push('Towers here get +1 range');
+            } else if (tile === TileType.PATH || tile === TileType.SPAWN || tile === TileType.EXIT) {
+                title = 'Enemy Path';
+                lines.push('Cannot build here');
+            } else if (tile === TileType.WATER || tile === TileType.TREE || tile === TileType.ROCK) {
+                const names = { [TileType.WATER]: 'Water', [TileType.TREE]: 'Tree', [TileType.ROCK]: 'Rock' };
+                title = names[tile] || 'Obstacle';
+                lines.push('Cannot build here');
+            } else if (tile === TileType.GRASS) {
+                title = 'Grass';
+                lines.push('Buildable — place towers here');
+            } else if (tile === TileType.TOWER_BASE) {
+                // Already occupied by a tower — tooltip was handled above
+            }
+        }
+
+        if (!title) return;
+
+        // ─── Render tooltip ───
+        const maxW = 250;
+        const pad = 8;
+        const titleFont = F(14, 'bold');
+        const bodyFont = F(13);
+
+        ctx.save();
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'top';
+
+        // Measure title
+        ctx.font = titleFont;
+        const titleWidth = ctx.measureText(title).width;
+
+        // Word-wrap body lines and measure
+        ctx.font = bodyFont;
+        const wrappedLines = [];
+        for (const line of lines) {
+            const words = line.split(' ');
+            let cur = '';
+            for (const word of words) {
+                const test = cur ? cur + ' ' + word : word;
+                if (ctx.measureText(test).width > maxW - pad * 2) {
+                    if (cur) wrappedLines.push(cur);
+                    cur = word;
+                } else {
+                    cur = test;
+                }
+            }
+            if (cur) wrappedLines.push(cur);
+        }
+
+        // Calculate dimensions
+        let bodyMaxW = 0;
+        for (const l of wrappedLines) {
+            bodyMaxW = Math.max(bodyMaxW, ctx.measureText(l).width);
+        }
+        const tooltipW = Math.min(maxW, Math.max(titleWidth, bodyMaxW) + pad * 2);
+        const lineH = 16;
+        const titleH = 18;
+        const tooltipH = pad + titleH + wrappedLines.length * lineH + pad;
+
+        // Position near mouse, clamped to screen edges
+        let tx = mouseX + 15;
+        let ty = mouseY + 15;
+        if (tx + tooltipW > SCREEN_WIDTH - 4) tx = mouseX - tooltipW - 10;
+        if (ty + tooltipH > SCREEN_HEIGHT - 4) ty = mouseY - tooltipH - 10;
+        if (tx < 4) tx = 4;
+        if (ty < 4) ty = 4;
+
+        // Draw background
+        roundRect(ctx, tx, ty, tooltipW, tooltipH, 4);
+        ctx.fillStyle = 'rgba(20,20,40,0.92)';
+        ctx.fill();
+        ctx.strokeStyle = Colors.PANEL_BORDER;
+        ctx.lineWidth = 1;
+        ctx.stroke();
+
+        // Draw title
+        ctx.font = titleFont;
+        ctx.fillStyle = Colors.TEXT;
+        ctx.fillText(title, tx + pad, ty + pad);
+
+        // Draw body
+        ctx.font = bodyFont;
+        ctx.fillStyle = Colors.TEXT_DIM;
+        let ly = ty + pad + titleH;
+        for (const l of wrappedLines) {
+            ctx.fillText(l, tx + pad, ly);
+            ly += lineH;
+        }
+
+        ctx.restore();
     }
 
     getDamageTypeColor(type) {

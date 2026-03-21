@@ -23,6 +23,7 @@ export const GameState = {
     MAIN_MENU: 'MAIN_MENU',
     MAP_SELECT: 'MAP_SELECT',
     WORKSHOP: 'WORKSHOP',
+    BESTIARY: 'BESTIARY',
     EDITOR: 'EDITOR',
     PREP: 'PREP',
     COMBAT: 'COMBAT',
@@ -129,7 +130,7 @@ export const INTEREST_CAP = 10;
 export const SELL_REFUND_RATIO = 0.6;
 export const PERFECT_WAVE_BONUS = 10;
 export const EARLY_START_BONUS = 5;
-export const MAX_GOLD_MINES = 10;
+export const MAX_GOLD_MINES = 5;
 export const HIGH_GROUND_RANGE_BONUS = 1.0;
 export const TOTAL_WAVES = 20;
 

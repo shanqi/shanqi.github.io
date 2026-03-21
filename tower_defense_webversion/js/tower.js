@@ -79,6 +79,7 @@ export class Tower {
         this.auraFireRateBonus = 1.0;
 
         this.totalInvestment = data.cost;
+        this.totalKills = 0;
     }
 
     get pixelX() {

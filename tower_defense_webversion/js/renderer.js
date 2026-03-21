@@ -124,6 +124,14 @@ export class Renderer {
                     }
                 }
             }
+
+            // Undo grace period shimmer
+            if (tower._undoGracePeriod > 0) {
+                const pulse = 0.3 + 0.2 * Math.sin(this.time * 6);
+                ctx.strokeStyle = `rgba(255,255,255,${pulse})`;
+                ctx.lineWidth = 2;
+                ctx.strokeRect(px, py, TILE_SIZE, TILE_SIZE);
+            }
         }
     }
 

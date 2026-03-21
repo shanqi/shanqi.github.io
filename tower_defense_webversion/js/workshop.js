@@ -185,13 +185,18 @@ export class Workshop {
             } else {
                 ctx.fillStyle = 'rgb(25, 25, 40)';
             }
-            roundRect(ctx, rightX, rightY, rightW, 38, 4);
+            roundRect(ctx, rightX, rightY, rightW, 48, 4);
             ctx.fill();
 
             // Name
             ctx.fillStyle = Colors.TEXT;
             ctx.font = `17px ${FONT}`;
             ctx.fillText(mast.name, rightX + 10, rightY + 5);
+
+            // Description
+            ctx.fillStyle = Colors.TEXT_DIM;
+            ctx.font = `12px ${FONT}`;
+            ctx.fillText(mast.desc, rightX + 10, rightY + 24);
 
             // Pips at x + 170
             this._drawPips(ctx, rightX + 170, rightY + 10, level, mast.max);
@@ -210,8 +215,8 @@ export class Workshop {
             ctx.textAlign = 'left';
 
             // Store button
-            this.buttons.push({ x: rightX, y: rightY, w: rightW, h: 38, category: 'mastery', key });
-            rightY += 40;
+            this.buttons.push({ x: rightX, y: rightY, w: rightW, h: 48, category: 'mastery', key });
+            rightY += 52;
         }
 
         // ── Back button ──
