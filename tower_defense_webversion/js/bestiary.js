@@ -101,8 +101,8 @@ export class Bestiary {
 
         // Enemy entries — 2 columns, 5 rows
         const colW = (SCREEN_WIDTH - 50) / 2;
-        const cardHeight = 62;
-        const cardGap = 5;
+        const cardHeight = 120;
+        const cardGap = 6;
         const startY = 74;
 
         ctx.textAlign = 'left';
@@ -166,9 +166,9 @@ export class Bestiary {
     }
 
     _drawDiscoveredCard(ctx, cardX, cardY, cardWidth, cardHeight, type, data, info) {
-        const circleR = 15;
-        const circleX = cardX + 24;
-        const circleY = cardY + cardHeight / 2;
+        const circleR = 18;
+        const circleX = cardX + 26;
+        const circleY = cardY + 30;
         const enemyColor = EnemyColors[type] || Colors.TEXT_DIM;
 
         // Colored circle with first letter
@@ -176,86 +176,87 @@ export class Bestiary {
         ctx.beginPath();
         ctx.arc(circleX, circleY, circleR, 0, Math.PI * 2);
         ctx.fill();
-
-        // Circle border
-        ctx.strokeStyle = 'rgba(255,255,255,0.15)';
+        ctx.strokeStyle = 'rgba(255,255,255,0.2)';
         ctx.lineWidth = 1;
         ctx.beginPath();
         ctx.arc(circleX, circleY, circleR, 0, Math.PI * 2);
         ctx.stroke();
 
-        // First letter inside circle
-        ctx.fillStyle = Colors.BG;
-        ctx.font = `bold 16px ${FONT}`;
+        // Letter inside circle
+        ctx.fillStyle = '#000';
+        ctx.font = `bold 18px ${FONT}`;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillText(data.name.charAt(0).toUpperCase(), circleX, circleY);
 
-        // Text area starts after the circle
+        // Text area
         const textX = circleX + circleR + 14;
-        const textMaxW = cardWidth - (textX - cardX) - 12;
-
-        // Enemy name
-        ctx.fillStyle = enemyColor;
-        ctx.font = `bold 17px ${FONT}`;
+        const maxW = cardWidth - (textX - cardX) - 10;
         ctx.textAlign = 'left';
         ctx.textBaseline = 'top';
-        ctx.fillText(data.name, textX, cardY + 5);
 
-        // Flying / ability badge next to name
+        // Row 1: Name + ability badges
+        ctx.fillStyle = '#fff';
+        ctx.font = `bold 15px ${FONT}`;
+        ctx.fillText(data.name, textX, cardY + 8);
+
         const badges = [];
         if (data.is_flying) badges.push('Flying');
         if (data.ability) {
-            const abilityLabels = {
-                debuff_immune: 'Debuff Immune',
-                heal_aura: 'Healer',
-                disable_tower: 'Disables Towers',
-                summon_on_death: 'Spawns Imps',
-                tower_stun: 'Tower Stun',
-            };
-            const label = abilityLabels[data.ability];
-            if (label) badges.push(label);
+            const labels = { debuff_immune: 'Immune', heal_aura: 'Healer', disable_tower: 'Disabler', summon_on_death: 'Summoner', tower_stun: 'Stunner' };
+            if (labels[data.ability]) badges.push(labels[data.ability]);
         }
         if (badges.length > 0) {
-            const nameWidth = ctx.measureText(data.name).width;
-            ctx.fillStyle = Colors.TEXT_DARK;
-            ctx.font = `11px ${FONT}`;
-            ctx.fillText(`  ${badges.join(' | ')}`, textX + nameWidth, cardY + 8);
+            const nameW = ctx.measureText(data.name).width;
+            ctx.fillStyle = enemyColor;
+            ctx.font = `bold 11px ${FONT}`;
+            ctx.fillText(badges.join(' | '), textX + nameW + 8, cardY + 11);
         }
 
-        // Stats line: HP, Spd, Armor, Reward
+        // Row 2: Stats
         ctx.fillStyle = Colors.TEXT_DIM;
         ctx.font = `13px ${FONT}`;
-        const armorLabel = this._formatArmor(data.armor);
-        const statsText = `HP: ${data.hp}  Spd: ${data.speed}  Armor: ${armorLabel}  Reward: ${data.reward}g`;
-        ctx.fillText(statsText, textX, cardY + 25);
+        const armor = this._formatArmor(data.armor);
+        ctx.fillText(`HP: ${data.hp}   Speed: ${data.speed}   Armor: ${armor}   Reward: ${data.reward}g`, textX, cardY + 28);
 
-        // Flavor text (italic)
-        ctx.fillStyle = Colors.TEXT_DARK;
+        // Row 3: Flavor text
+        ctx.fillStyle = '#aaaacc';
         ctx.font = `italic 12px ${FONT}`;
-        ctx.fillText(info.flavor, textX, cardY + 41);
+        let flavor = info.flavor;
+        // Truncate if too long for card width
+        while (ctx.measureText(flavor).width > maxW && flavor.length > 20) {
+            flavor = flavor.slice(0, -1);
+        }
+        if (flavor !== info.flavor) flavor += '...';
+        ctx.fillText(flavor, textX, cardY + 48);
 
-        // Weak to / Strong vs
-        const tacticY = cardY + 53;
+        // Row 4: Weak to (green)
+        ctx.fillStyle = '#66dd66';
         ctx.font = `12px ${FONT}`;
+        let weakText = `Weak: ${info.weakTo}`;
+        while (ctx.measureText(weakText).width > maxW && weakText.length > 15) {
+            weakText = weakText.slice(0, -1);
+        }
+        if (weakText.length < `Weak: ${info.weakTo}`.length) weakText += '..';
+        ctx.fillText(weakText, textX, cardY + 66);
 
-        // Weak to (green)
-        ctx.fillStyle = Colors.SUCCESS;
-        const weakLabel = `Weak: ${info.weakTo}`;
-        ctx.fillText(weakLabel, textX, tacticY);
+        // Row 5: Strong vs (red)
+        ctx.fillStyle = '#dd6666';
+        ctx.font = `12px ${FONT}`;
+        let strongText = `Strong: ${info.strongVs}`;
+        while (ctx.measureText(strongText).width > maxW && strongText.length > 15) {
+            strongText = strongText.slice(0, -1);
+        }
+        if (strongText.length < `Strong: ${info.strongVs}`.length) strongText += '..';
+        ctx.fillText(strongText, textX, cardY + 82);
 
-        // Strong vs (red) — offset to the right
-        const weakWidth = ctx.measureText(weakLabel).width;
-        const gap = 20;
-        ctx.fillStyle = Colors.DANGER;
-        const strongLabel = `Strong: ${info.strongVs}`;
-        const strongX = textX + weakWidth + gap;
-        if (strongX + ctx.measureText(strongLabel).width <= cardX + cardWidth - 12) {
-            ctx.fillText(strongLabel, strongX, tacticY);
-        } else {
-            // If it doesn't fit on the same line, just truncate or skip
-            // (all entries fit at 1240px width, but safety fallback)
-            ctx.fillText(strongLabel, textX, tacticY);
+        // Lives cost indicator (bottom-left of circle area)
+        if (data.lives_cost > 1) {
+            ctx.fillStyle = Colors.DANGER;
+            ctx.font = `bold 11px ${FONT}`;
+            ctx.textAlign = 'center';
+            ctx.fillText(`${data.lives_cost} lives`, circleX, cardY + 56);
+            ctx.textAlign = 'left';
         }
     }
 

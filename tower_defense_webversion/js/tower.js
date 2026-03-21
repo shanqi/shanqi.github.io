@@ -77,9 +77,11 @@ export class Tower {
         this.synergyFireRateBonus = 1.0;
         this.auraDamageBonus = 0;
         this.auraFireRateBonus = 1.0;
+        this.immuneToDisable = false;
 
         this.totalInvestment = data.cost;
         this.totalKills = 0;
+        this.globalDamageMult = 1.0; // Set by challenge modifiers
     }
 
     get pixelX() {
@@ -94,6 +96,7 @@ export class Tower {
         let mult = this.level <= 7 ? UPGRADE_MULTIPLIERS[this.level - 1].damage : UPGRADE_MULTIPLIERS[6].damage;
         let dmg = this.baseDamage * mult;
         dmg *= (1 + this.synergyDamageBonus + this.auraDamageBonus);
+        dmg *= this.globalDamageMult;
 
         if (this.specialization) {
             const spec = TOWER_DATA[this.type].specializations[this.specialization];
@@ -296,11 +299,13 @@ export class Tower {
     }
 
     disable(duration) {
+        if (this.immuneToDisable) return;
         this.disabled = true;
         this.disabledTimer = Math.max(this.disabledTimer, duration);
     }
 
     stun(duration) {
+        if (this.immuneToDisable) return;
         this.stunned = true;
         this.stunnedTimer = Math.max(this.stunnedTimer, duration);
     }

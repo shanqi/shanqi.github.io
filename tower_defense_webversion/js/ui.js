@@ -5,7 +5,7 @@ import {
     GRID_WIDTH, GRID_HEIGHT, GRID_OFFSET_X, GRID_OFFSET_Y,
     PANEL_WIDTH, TOP_BAR_HEIGHT, BOTTOM_BAR_HEIGHT,
     TowerType, TileType, GameState, Colors, TowerColors, TOTAL_WAVES, SELL_REFUND_RATIO,
-    ARMOR_MATRIX, DamageType, ArmorType,
+    ARMOR_MATRIX, DamageType, ArmorType, CHALLENGE_MODIFIERS,
     FONT, FONT_MONO
 } from './constants.js';
 import { TOWER_DATA, TOWER_ORDER } from './towerData.js';
@@ -48,6 +48,8 @@ export class UI {
         this._specABtn = null;
         this._specBBtn = null;
         this._showingTowerInfo = false;
+        // Challenge modifiers
+        this.activeModifiers = new Set();
         // Tooltip hover state
         this._tooltipTimer = 0;
         this._lastMX = 0;
@@ -118,8 +120,22 @@ export class UI {
             return null;
         }
         if (gameState === GameState.MAP_SELECT) {
-            for (let i = 0; i < 10; i++) { // support up to 10 maps (5 built-in + custom)
-                if (this._hitRect(mx, my, cx - 200, 100 + i * 70, 400, 60)) return `map_${i}`;
+            // Check modifier checkboxes first
+            if (this._modifierBtns) {
+                for (const btn of this._modifierBtns) {
+                    if (this._hitRect(mx, my, btn.x, btn.y, btn.w, btn.h)) {
+                        if (this.activeModifiers.has(btn.key)) {
+                            this.activeModifiers.delete(btn.key);
+                        } else {
+                            this.activeModifiers.add(btn.key);
+                        }
+                        return 'modifier_toggle';
+                    }
+                }
+            }
+            // Map buttons (left side, new positions)
+            for (let i = 0; i < 10; i++) {
+                if (this._hitRect(mx, my, 40, 100 + i * 60, 420, 55)) return `map_${i}`;
             }
             if (this._hitRect(mx, my, 20, SCREEN_HEIGHT - 60, 120, 40)) return 'back';
             return null;
@@ -698,7 +714,7 @@ export class UI {
         ctx.fillStyle = Colors.ACCENT; ctx.font = F(28, 'bold');
         ctx.fillText('Harry the Duck', cx, 257);
         ctx.fillStyle = Colors.TEXT_DARK; ctx.font = F(14);
-        ctx.fillText('March 2026  |  v0.2.17', cx, 280);
+        ctx.fillText('March 2026  |  v0.2.20', cx, 280);
 
         // Separator
         ctx.strokeStyle = Colors.PANEL_BORDER;
@@ -742,30 +758,93 @@ export class UI {
         ctx.fillText('SELECT MAP', cx, 65);
         ctx.textAlign = 'left';
 
+        // Maps (left side)
         let y = 100;
         for (let i = 0; i < maps.length; i++) {
             const map = maps[i];
-            const btn = { x: cx - 200, y, w: 400, h: 60 };
+            const btn = { x: 40, y, w: 420, h: 55 };
 
             roundRect(ctx, btn.x, btn.y, btn.w, btn.h, 6);
             ctx.fillStyle = Colors.BG_LIGHT; ctx.fill();
             ctx.strokeStyle = Colors.PANEL_BORDER; ctx.lineWidth = 1; ctx.stroke();
 
-            // Map name
             ctx.fillStyle = Colors.TEXT; ctx.font = F(17);
-            ctx.fillText(map.name, btn.x + 15, btn.y + 22);
+            ctx.fillText(map.name, btn.x + 15, btn.y + 20);
 
-            // Difficulty
-            const diffColors = { Easy: Colors.HP_GREEN, Medium: Colors.HP_YELLOW, Hard: Colors.HP_RED, Expert: '#9933ff' };
+            const diffColors = { Easy: Colors.HP_GREEN, Medium: Colors.HP_YELLOW, Hard: Colors.HP_RED, Expert: '#9933ff', Custom: Colors.ACCENT };
             ctx.fillStyle = diffColors[map.difficulty] || Colors.TEXT;
-            ctx.font = F(14);
-            ctx.fillText(map.difficulty, btn.x + 15, btn.y + 42);
+            ctx.font = F(13);
+            ctx.fillText(map.difficulty, btn.x + 15, btn.y + 40);
 
-            // Spawn/exit count
             ctx.fillStyle = Colors.TEXT_DIM;
-            ctx.fillText(`Spawns: ${map.spawns.length}  Exits: ${map.exits.length}`, btn.x + 150, btn.y + 42);
+            ctx.fillText(`Spawns: ${map.spawns.length}  Exits: ${map.exits.length}`, btn.x + 150, btn.y + 40);
 
-            y += 70;
+            y += 60;
+        }
+
+        // Challenge Modifiers (right side)
+        const modX = 500;
+        const modW = 360;
+        let modY = 100;
+
+        ctx.fillStyle = Colors.TEXT_DIM; ctx.font = F(14, 'bold');
+        ctx.fillText('CHALLENGE MODIFIERS', modX, modY);
+        modY += 22;
+
+        this._modifierBtns = [];
+        for (const [key, mod] of Object.entries(CHALLENGE_MODIFIERS)) {
+            const active = this.activeModifiers.has(key);
+            const btn = { x: modX, y: modY, w: modW, h: 42 };
+
+            // Background
+            roundRect(ctx, btn.x, btn.y, btn.w, btn.h, 4);
+            ctx.fillStyle = active ? 'rgba(230,184,0,0.12)' : Colors.BG_LIGHT;
+            ctx.fill();
+            ctx.strokeStyle = active ? Colors.ACCENT : Colors.PANEL_BORDER;
+            ctx.lineWidth = active ? 2 : 1;
+            ctx.stroke();
+
+            // Checkbox
+            const cbx = btn.x + 10, cby = btn.y + 11, cbs = 18;
+            ctx.strokeStyle = active ? Colors.ACCENT : Colors.PANEL_BORDER;
+            ctx.lineWidth = 2;
+            ctx.strokeRect(cbx, cby, cbs, cbs);
+            if (active) {
+                ctx.strokeStyle = Colors.ACCENT; ctx.lineWidth = 2.5;
+                ctx.beginPath();
+                ctx.moveTo(cbx + 3, cby + 9);
+                ctx.lineTo(cbx + 7, cby + 14);
+                ctx.lineTo(cbx + 15, cby + 4);
+                ctx.stroke();
+            }
+
+            // Name
+            ctx.fillStyle = active ? Colors.ACCENT : Colors.TEXT;
+            ctx.font = F(14);
+            ctx.fillText(mod.name, btn.x + 36, btn.y + 14);
+
+            // Description
+            ctx.fillStyle = Colors.TEXT_DIM; ctx.font = F(12);
+            ctx.fillText(mod.desc, btn.x + 36, btn.y + 30);
+
+            // Essence multiplier badge
+            ctx.fillStyle = '#9933ff'; ctx.font = F(13, 'bold');
+            ctx.textAlign = 'right';
+            ctx.fillText(`x${mod.essence_mult.toFixed(1)}`, btn.x + btn.w - 10, btn.y + 20);
+            ctx.textAlign = 'left';
+
+            this._modifierBtns.push({ ...btn, key });
+            modY += 48;
+        }
+
+        // Essence multiplier total
+        let totalMult = 1.0;
+        for (const key of this.activeModifiers) {
+            totalMult *= CHALLENGE_MODIFIERS[key]?.essence_mult || 1;
+        }
+        if (totalMult > 1) {
+            ctx.fillStyle = '#9933ff'; ctx.font = F(16, 'bold');
+            ctx.fillText(`Total: x${totalMult.toFixed(2)} essence`, modX, modY + 10);
         }
 
         // Back button

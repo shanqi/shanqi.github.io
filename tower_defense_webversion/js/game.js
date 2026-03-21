@@ -4,7 +4,7 @@ import {
     GameState, TileType, TowerType, EnemyType,
     STARTING_GOLD, STARTING_LIVES, INTEREST_RATE, INTEREST_CAP,
     SELL_REFUND_RATIO, PERFECT_WAVE_BONUS, EARLY_START_BONUS, MAX_GOLD_MINES, TOTAL_WAVES,
-    SYNERGIES, TILE_SIZE, FONT
+    SYNERGIES, TILE_SIZE, FONT, CHALLENGE_MODIFIERS
 } from './constants.js';
 import { MAP_DATA } from './mapData.js';
 import { TOWER_DATA, TOWER_ORDER } from './towerData.js';
@@ -96,6 +96,24 @@ export class Game {
         const upg = this.saveData.upgrades;
         this.gold = STARTING_GOLD + (upg.starting_economy || 0) * 50;
         this.lives = STARTING_LIVES + (upg.better_lives || 0) * 5;
+
+        // Apply challenge modifiers
+        this.modifiers = new Set(this.ui.activeModifiers);
+        if (this.modifiers.has('glass_cannon')) {
+            this.lives = 5;
+        }
+        this.maxTowers = this.modifiers.has('minimalist') ? 10 : Infinity;
+        this.canSellTowers = !this.modifiers.has('iron_man');
+        this.enemySpeedMult = this.modifiers.has('speed_demon') ? 1.25 : 1.0;
+        this.goldRewardMult = this.modifiers.has('speed_demon') ? 1.5 : 1.0;
+        this.towerDamageMult = this.modifiers.has('glass_cannon') ? 2.0 : 1.0;
+        // Calculate essence multiplier
+        this.challengeEssenceMult = 1.0;
+        for (const key of this.modifiers) {
+            const mod = CHALLENGE_MODIFIERS[key];
+            if (mod) this.challengeEssenceMult *= mod.essence_mult;
+        }
+
         this.wave = 0;
         this.towers = [];
         this.enemies = [];
@@ -221,10 +239,11 @@ export class Game {
             } else if (this.state === GameState.MAP_SELECT) {
                 if (btn?.startsWith('map_')) {
                     const idx = parseInt(btn.split('_')[1]);
-                    this.startMap(idx);
+                    if (idx < this.maps.length) this.startMap(idx);
                 } else if (btn === 'back') {
                     this.state = GameState.MAIN_MENU;
                 }
+                // 'modifier_toggle' — no action needed, UI redraws with new state
             }
         }
         this.input.clearFrame();
@@ -345,7 +364,7 @@ export class Game {
             if (btn === 'main_menu') {
                 // Award essence and save stats
                 const won = this.state === GameState.WON;
-                this.essenceEarned = calculateEssence(this.wave, this.bossesKilled, won);
+                this.essenceEarned = calculateEssence(this.wave, this.bossesKilled, won, this.challengeEssenceMult || 1.0);
                 this.saveData.essence += this.essenceEarned;
                 this.saveData.stats.games_played++;
                 this.saveData.stats.best_wave = Math.max(this.saveData.stats.best_wave, this.wave);
@@ -497,6 +516,9 @@ export class Game {
         const data = TOWER_DATA[type];
         if (this.gold < data.cost) return;
 
+        // Minimalist modifier: max tower count
+        if (this.maxTowers && this.towers.length >= this.maxTowers) return;
+
         // Check if tower requires unlock
         if (data.requires_unlock && !this.saveData.unlocks[data.requires_unlock]) return;
 
@@ -505,6 +527,7 @@ export class Game {
 
         const isHighGround = this.tiles[gy][gx] === TileType.HIGH_GROUND;
         const tower = new Tower(type, gx, gy, isHighGround);
+        if (this.towerDamageMult) tower.globalDamageMult = this.towerDamageMult;
         this.towers.push(tower);
         this.gold -= data.cost;
         this.tiles[gy][gx] = TileType.TOWER_BASE;
@@ -560,6 +583,7 @@ export class Game {
 
     sellTower() {
         if (!this.selectedTower) return;
+        if (!this.canSellTowers) return; // Iron Man modifier
         const tower = this.selectedTower;
         const refund = Math.floor(tower.totalInvestment * SELL_REFUND_RATIO);
         this.gold += refund;
@@ -694,6 +718,11 @@ export class Game {
         if (route.length === 0) return;
 
         const enemy = new Enemy(type, this.wave, route, spawnIndex);
+        // Apply speed modifier
+        if (this.enemySpeedMult && this.enemySpeedMult !== 1) {
+            enemy.speed *= this.enemySpeedMult;
+            enemy.baseSpeed *= this.enemySpeedMult;
+        }
         this.enemies.push(enemy);
         this.effects.addPortalParticles(enemy.pixelX, enemy.pixelY);
 
@@ -726,7 +755,8 @@ export class Game {
         const dead = this.enemies.filter(e => !e.alive && !e.reachedExit && !e._processed);
         for (const e of dead) {
             e._processed = true;
-            this.gold += e.reward;
+            const goldReward = Math.floor(e.reward * (this.goldRewardMult || 1));
+            this.gold += goldReward;
             this.effects.registerKill(e.pixelX, e.pixelY);
             this.effects.addFloatingText(e.pixelX, e.pixelY, `+$${e.reward}`, '#ffd700');
 
@@ -849,7 +879,7 @@ export class Game {
             }
         }
 
-        // Enemy counterattack: ground enemies near ducks deal damage
+        // Enemy counterattack: ground enemies near ducks deal damage + get slowed
         for (const duck of this.ducks) {
             if (!duck.alive) continue;
             for (const e of this.enemies) {
@@ -859,6 +889,10 @@ export class Game {
                 const dist = Math.sqrt(dx * dx + dy * dy);
                 if (dist <= 1.5) {
                     duck.takeDamage(e.maxHP * 0.03 * dt);
+                }
+                // Blocking slow: enemies within 2.5 tiles of any duck get 30% slow
+                if (dist <= 2.5) {
+                    e.applySlow(0.3, 0.3);
                 }
             }
         }
@@ -943,6 +977,7 @@ export class Game {
             t.synergyFireRateBonus = 1.0;
             t.auraDamageBonus = 0;
             t.auraFireRateBonus = 1.0;
+            t.immuneToDisable = false;
         }
 
         // Synergies
@@ -987,6 +1022,10 @@ export class Game {
                         t.auraFireRateBonus = Math.min(t.auraFireRateBonus, aura.auraAttackSpeed);
                     } else {
                         t.auraDamageBonus = Math.max(t.auraDamageBonus, aura.auraDamage);
+                    }
+                    // Sanctuary specialization: grant disable immunity
+                    if (aura.specialization === 'B') {
+                        t.immuneToDisable = true;
                     }
                 }
             }
