@@ -665,11 +665,14 @@ export class Game {
         }
 
         const sw = waveData.subwaves[this.subwaveIndex];
+        const numSpawns = this.spawns.length;
         this.spawnQueue = [];
         for (let i = 0; i < sw.count; i++) {
+            // Distribute enemies across all spawn points (round-robin)
+            const spawnIdx = sw.spawn_index !== undefined ? sw.spawn_index : (i % numSpawns);
             this.spawnQueue.push({
                 type: sw.enemy_type,
-                spawnIndex: sw.spawn_index || 0,
+                spawnIndex: Math.min(spawnIdx, numSpawns - 1),
             });
         }
         this.spawnTimer = 0;
