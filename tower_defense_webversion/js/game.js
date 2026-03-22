@@ -778,6 +778,12 @@ export class Game {
                     imp.x = e.x + (Math.random() - 0.5) * 0.5;
                     imp.y = e.y + (Math.random() - 0.5) * 0.5;
                     this.enemies.push(imp);
+                    // Track imp discovery for bestiary
+                    if (!this.saveData.stats.discovered) this.saveData.stats.discovered = {};
+                    if (!this.saveData.stats.discovered[EnemyType.IMP]) {
+                        this.saveData.stats.discovered[EnemyType.IMP] = true;
+                        saveSaveData(this.saveData);
+                    }
                 }
             }
 
