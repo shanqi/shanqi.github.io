@@ -151,6 +151,84 @@ export function getExitTile() {
     });
 }
 
+export function getBuildingTile(variant = 0) {
+    return getCached(`building_${variant}`, TILE_SIZE, TILE_SIZE, (ctx, w, h) => {
+        // Red/brown school roof (terracotta style)
+        const roofColors = ['#8b4532', '#7a3d2c', '#945040'];
+        ctx.fillStyle = roofColors[variant % 3];
+        ctx.fillRect(0, 0, w, h);
+        // Roof ridge line
+        ctx.fillStyle = 'rgba(0,0,0,0.15)';
+        ctx.fillRect(0, h / 2 - 1, w, 2);
+        // Roof edge highlight
+        ctx.fillStyle = 'rgba(255,200,150,0.12)';
+        ctx.fillRect(0, 0, w, 2);
+        // Subtle tile pattern
+        ctx.fillStyle = 'rgba(0,0,0,0.06)';
+        for (let i = 0; i < w; i += 8) {
+            ctx.fillRect(i, 0, 1, h);
+        }
+        for (let i = 0; i < h; i += 8) {
+            ctx.fillRect(0, i, w, 1);
+        }
+        // Edge shadow
+        ctx.fillStyle = 'rgba(0,0,0,0.2)';
+        ctx.fillRect(w - 1, 0, 1, h);
+        ctx.fillRect(0, h - 1, w, 1);
+    });
+}
+
+export function getFieldTile(variant = 0) {
+    return getCached(`field_${variant}`, TILE_SIZE, TILE_SIZE, (ctx, w, h) => {
+        // Bright sports field turf — alternating mow stripes
+        const bright = variant % 2 === 0;
+        ctx.fillStyle = bright ? '#3d8c30' : '#358526';
+        ctx.fillRect(0, 0, w, h);
+        // Turf line stripes (subtle mowing pattern)
+        ctx.fillStyle = bright ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)';
+        for (let i = 0; i < w; i += 6) {
+            ctx.fillRect(i, 0, 3, h);
+        }
+        // Field line markings (white lines on some tiles)
+        if (variant === 2) {
+            ctx.fillStyle = 'rgba(255,255,255,0.35)';
+            ctx.fillRect(0, h / 2, w, 2);
+        }
+        if (variant === 3) {
+            ctx.fillStyle = 'rgba(255,255,255,0.35)';
+            ctx.fillRect(w / 2, 0, 2, h);
+        }
+    });
+}
+
+export function getParkingTile(variant = 0) {
+    return getCached(`parking_${variant}`, TILE_SIZE, TILE_SIZE, (ctx, w, h) => {
+        // Gray asphalt
+        ctx.fillStyle = '#505058';
+        ctx.fillRect(0, 0, w, h);
+        // Asphalt texture (subtle noise)
+        ctx.fillStyle = 'rgba(0,0,0,0.08)';
+        for (let i = 0; i < 6; i++) {
+            const px = ((variant + 1) * (i + 1) * 13) % w;
+            const py = ((variant + 1) * (i + 1) * 7) % h;
+            ctx.fillRect(px, py, 2, 2);
+        }
+        // Parking lines (white dashes on some tiles)
+        if (variant % 3 === 0) {
+            ctx.fillStyle = 'rgba(255,255,255,0.3)';
+            ctx.fillRect(w / 2 - 1, 2, 2, h - 4);
+        }
+        if (variant % 3 === 1) {
+            // Parked car representation (small colored rectangle)
+            const carColors = ['#667', '#556', '#778', '#665'];
+            ctx.fillStyle = carColors[variant % 4];
+            ctx.fillRect(6, 8, 18, 14);
+            ctx.fillStyle = 'rgba(150,180,220,0.3)';
+            ctx.fillRect(8, 10, 6, 5); // windshield
+        }
+    });
+}
+
 export function getTileSprite(tileType, x, y) {
     switch (tileType) {
         case TileType.GRASS: return getGrassTile((x + y) % 2);
@@ -162,6 +240,9 @@ export function getTileSprite(tileType, x, y) {
         case TileType.EXIT: return getExitTile();
         case TileType.TOWER_BASE: return getGrassTile(0);
         case TileType.HIGH_GROUND: return getHighGroundTile();
+        case TileType.BUILDING: return getBuildingTile((x * 3 + y * 5) % 3);
+        case TileType.FIELD: return getFieldTile((x + y * 2) % 4);
+        case TileType.PARKING: return getParkingTile((x * 7 + y * 3) % 4);
         default: return getGrassTile(0);
     }
 }

@@ -43,6 +43,9 @@ export const TileType = {
     EXIT: 6,
     TOWER_BASE: 7,
     HIGH_GROUND: 8,
+    BUILDING: 9,    // School building — dark roof, non-buildable
+    FIELD: 10,      // Sports field — bright turf green, non-buildable
+    PARKING: 11,    // Parking lot — gray asphalt, non-buildable
 };
 
 // Tower types

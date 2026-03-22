@@ -714,7 +714,7 @@ export class UI {
         ctx.fillStyle = Colors.ACCENT; ctx.font = F(28, 'bold');
         ctx.fillText('Harry the Duck', cx, 257);
         ctx.fillStyle = Colors.TEXT_DARK; ctx.font = F(14);
-        ctx.fillText('March 2026  |  v0.2.21', cx, 280);
+        ctx.fillText('March 2026  |  v0.2.20', cx, 280);
 
         // Separator
         ctx.strokeStyle = Colors.PANEL_BORDER;
@@ -1091,6 +1091,15 @@ export class UI {
                 const names = { [TileType.WATER]: 'Water', [TileType.TREE]: 'Tree', [TileType.ROCK]: 'Rock' };
                 title = names[tile] || 'Obstacle';
                 lines.push('Cannot build here');
+            } else if (tile === 9) { // BUILDING
+                title = 'Building';
+                lines.push('School building — cannot build here');
+            } else if (tile === 10) { // FIELD
+                title = 'Sports Field';
+                lines.push('Turf field — cannot build here');
+            } else if (tile === 11) { // PARKING
+                title = 'Parking Lot';
+                lines.push('Asphalt — cannot build here');
             } else if (tile === TileType.GRASS) {
                 title = 'Grass';
                 lines.push('Buildable — place towers here');
